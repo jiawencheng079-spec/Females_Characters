@@ -1,0 +1,156 @@
+import { useState, useRef, useEffect } from 'react'
+import './Chapter1.css'
+
+const MOVE_SPEED = 500 // 像素/秒
+
+/** 场景缩放因子 — 图片会放大到视口的 N 倍，越大探索空间越多 */
+const SCENE_SCALE = 2.5
+
+const SCENE_IMG = '/assets/FirstLevel/mainscene.png'
+
+function Chapter1() {
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const [imgNatural, setImgNatural] = useState({ w: 0, h: 0 })
+  const [imgReady, setImgReady] = useState(false)
+  const keysRef = useRef<Set<string>>(new Set())
+  const animRef = useRef<number>(0)
+  const vpRef = useRef({ w: window.innerWidth, h: window.innerHeight })
+
+  // 预加载图片
+  useEffect(() => {
+    const img = new Image()
+    img.onload = () => {
+      setImgNatural({ w: img.naturalWidth, h: img.naturalHeight })
+      setImgReady(true)
+    }
+    img.onerror = () => console.error('场景图片加载失败:', SCENE_IMG)
+    img.src = SCENE_IMG
+    return () => { img.onload = null; img.onerror = null }
+  }, [])
+
+  // 缩放后的场景尺寸
+  const sceneW = imgNatural.w * SCENE_SCALE
+  const sceneH = imgNatural.h * SCENE_SCALE
+
+  // 最大可平移范围
+  const maxX = Math.max(0, sceneW - vpRef.current.w)
+  const maxY = Math.max(0, sceneH - vpRef.current.h)
+
+  // 键盘监听
+  useEffect(() => {
+    const onDown = (e: KeyboardEvent) => {
+      const k = e.key.toLowerCase()
+      if (['w', 'a', 's', 'd'].includes(k)) {
+        e.preventDefault()
+        keysRef.current.add(k)
+      }
+    }
+    const onUp = (e: KeyboardEvent) => {
+      const k = e.key.toLowerCase()
+      if (['w', 'a', 's', 'd'].includes(k)) {
+        keysRef.current.delete(k)
+      }
+    }
+    window.addEventListener('keydown', onDown)
+    window.addEventListener('keyup', onUp)
+    return () => {
+      window.removeEventListener('keydown', onDown)
+      window.removeEventListener('keyup', onUp)
+    }
+  }, [])
+
+  // 窗口 resize
+  useEffect(() => {
+    const onResize = () => {
+      vpRef.current = { w: window.innerWidth, h: window.innerHeight }
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  // 动画帧 — WASD 平移
+  useEffect(() => {
+    if (!imgReady) return
+
+    let lastTime = performance.now()
+    const clamp = (v: number, min: number, max: number) =>
+      Math.max(min, Math.min(max, v))
+
+    const loop = (now: number) => {
+      const dt = (now - lastTime) / 1000
+      lastTime = now
+
+      let dx = 0, dy = 0
+      const keys = keysRef.current
+      if (keys.has('a')) dx -= 1
+      if (keys.has('d')) dx += 1
+      if (keys.has('w')) dy -= 1
+      if (keys.has('s')) dy += 1
+
+      if (dx !== 0 && dy !== 0) {
+        dx /= Math.SQRT2
+        dy /= Math.SQRT2
+      }
+
+      const step = MOVE_SPEED * dt
+
+      setOffset((prev) => ({
+        x: clamp(prev.x + dx * step, 0, maxX),
+        y: clamp(prev.y + dy * step, 0, maxY),
+      }))
+
+      animRef.current = requestAnimationFrame(loop)
+    }
+
+    animRef.current = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(animRef.current)
+  }, [imgReady, maxX, maxY])
+
+  // 图片加载后把初始位置定在画面正中偏上
+  useEffect(() => {
+    if (!imgReady) return
+    const centerX = maxX / 2
+    const centerY = maxY * 0.25 // 偏上一点，因为场景重点通常在偏上位置
+    setOffset({
+      x: centerX,
+      y: Math.max(0, centerY),
+    })
+  }, [imgReady, maxX, maxY])
+
+  return (
+    <div className="chapter1">
+      {/* 加载中 */}
+      {!imgReady && (
+        <div className="chapter1-loading">
+          <p>场景加载中…</p>
+        </div>
+      )}
+
+      {/* 场景 — 缩放后的大图 */}
+      {imgReady && (
+        <div
+          className="chapter1-scene"
+          style={{
+            width: sceneW,
+            height: sceneH,
+            transform: `translate(${-offset.x}px, ${-offset.y}px)`,
+          }}
+        >
+          <img
+            src={SCENE_IMG}
+            alt="第一关场景"
+            className="chapter1-bg"
+            draggable={false}
+          />
+        </div>
+      )}
+
+      {/* WASD 提示 */}
+      <div className="chapter1-hint">
+        <span>W A S D</span> 移动视角
+      </div>
+    </div>
+  )
+}
+
+export default Chapter1

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import MainMenu from './components/MainMenu/MainMenu'
 import Prologue from './components/Prologue/Prologue'
+import Chapter1 from './components/Chapter1/Chapter1'
 
 type GamePhase = 'menu' | 'prologue' | 'chapter1'
 
@@ -22,20 +23,7 @@ function App() {
         <Prologue onContinue={() => setPhase('chapter1')} />
       )}
 
-      {phase === 'chapter1' && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          fontFamily: "'STKaiti', 'KaiTi', 'SimSun', serif",
-          fontSize: '1.5rem',
-          color: '#8b4530',
-          background: '#e8dcc4',
-        }}>
-          第一关 — 即将到来
-        </div>
-      )}
+      {phase === 'chapter1' && <Chapter1 />}
     </>
   )
 }
