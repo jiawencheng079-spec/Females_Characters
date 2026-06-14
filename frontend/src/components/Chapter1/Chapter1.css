@@ -38,6 +38,17 @@
   pointer-events: none;
 }
 
+/* ========== 石碑装饰 ========== */
+.chapter1-boundary {
+  position: absolute;
+  right: 23%;
+  bottom: 24%;
+  width: 2%;
+  height: auto;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+}
+
 /* ========== WASD 操作提示 ========== */
 .chapter1-hint {
   position: absolute;

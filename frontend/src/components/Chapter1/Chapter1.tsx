@@ -142,6 +142,14 @@ function Chapter1() {
             className="chapter1-bg"
             draggable={false}
           />
+
+          {/* 石碑装饰 */}
+          <img
+            src="/assets/FirstLevel/boundary.png"
+            alt="石碑"
+            className="chapter1-boundary"
+            draggable={false}
+          />
         </div>
       )}
 
