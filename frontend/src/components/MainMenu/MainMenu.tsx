@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import AboutModal from './AboutModal'
 import './MainMenu.css'
 
 interface MainMenuProps {
@@ -8,6 +10,13 @@ interface MainMenuProps {
 }
 
 function MainMenu({ onStartGame, onContinueGame, onSettings, onAbout }: MainMenuProps) {
+  const [showAbout, setShowAbout] = useState(false)
+
+  const handleAbout = () => {
+    setShowAbout(true)
+    onAbout()
+  }
+
   return (
     <div className="main-menu">
       {/* 背景图 */}
@@ -35,7 +44,7 @@ function MainMenu({ onStartGame, onContinueGame, onSettings, onAbout }: MainMenu
           <button className="menu-btn btn-settings" onClick={onSettings}>
             设置
           </button>
-          <button className="menu-btn btn-about" onClick={onAbout}>
+          <button className="menu-btn btn-about" onClick={handleAbout}>
             关于女书
           </button>
         </div>
@@ -43,6 +52,9 @@ function MainMenu({ onStartGame, onContinueGame, onSettings, onAbout }: MainMenu
         {/* 版本号 */}
         <div className="version-tag">v1.0.0</div>
       </div>
+
+      {/* 关于女书弹窗 */}
+      <AboutModal visible={showAbout} onClose={() => setShowAbout(false)} />
     </div>
   )
 }
