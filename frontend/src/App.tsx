@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import MainMenu from './components/MainMenu/MainMenu'
 import Prologue from './components/Prologue/Prologue'
+import TitleCard from './components/TitleCard/TitleCard'
 import Chapter1 from './components/Chapter1/Chapter1'
 
-type GamePhase = 'menu' | 'prologue' | 'chapter1'
+type GamePhase = 'menu' | 'prologue' | 'titleCard' | 'chapter1'
 
 function App() {
   const [phase, setPhase] = useState<GamePhase>('menu')
@@ -20,7 +21,14 @@ function App() {
       )}
 
       {phase === 'prologue' && (
-        <Prologue onContinue={() => setPhase('chapter1')} />
+        <Prologue onContinue={() => setPhase('titleCard')} />
+      )}
+
+      {phase === 'titleCard' && (
+        <TitleCard
+          title="江永村：白昼"
+          onContinue={() => setPhase('chapter1')}
+        />
       )}
 
       {phase === 'chapter1' && <Chapter1 />}
