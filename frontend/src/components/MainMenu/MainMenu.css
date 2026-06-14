@@ -1,0 +1,169 @@
+/* ========== 可调整的比例变量 ========== */
+/*
+ *  在这里修改参数即可全局生效，刷新页面看效果
+ *  所有百分比都是相对于视口的
+ */
+.main-menu {
+  /* 标题区位置 */
+  --title-left: 12vw;        /* 标题距左边距离 */
+  --title-top: 10vh;         /* 标题距顶部距离 */
+  --title-w: 22vw;           /* 标题最大宽度 */
+  --title-h: 28vh;           /* 标题最大高度 */
+
+  /* 标题到按钮间距 */
+  --title-btn-gap: 3vh;
+
+  /* 按钮区位置（相对于标题左边） */
+  --btn-offset-left: 0vw;    /* 按钮额外左偏移 */
+  --btn-width: 18vw;         /* 按钮最小宽度 */
+  --btn-h-padding: 2.5vw;    /* 按钮横向内边距 */
+  --btn-v-padding: 1.8vh;    /* 按钮纵向内边距 */
+  --btn-font: 1.6vw;         /* 按钮字号 */
+  --btn-gap: 1.2vh;          /* 按钮间距 */
+  --btn-letter-spacing: 0.3em;
+}
+
+/* ========== 主菜单容器 ========== */
+.main-menu {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'STKaiti', 'KaiTi', 'SimSun', serif;
+}
+
+/* ========== 背景层 ========== */
+.main-menu-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('/assets/nushu/main_menu_bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #e8dcc4; /* 兜底色 */
+  z-index: 0;
+}
+
+/* ========== 内容层 ========== */
+.main-menu-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+  height: 100%;
+  padding-top: var(--title-top);
+  padding-left: var(--title-left);
+}
+
+/* ========== 标题区域 ========== */
+.title-area {
+  margin-bottom: var(--title-btn-gap);
+  display: flex;
+  justify-content: flex-start;
+}
+
+.title-logo {
+  max-width: var(--title-w);
+  max-height: var(--title-h);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 12px rgba(80, 50, 20, 0.15));
+}
+
+/* ========== 按钮组 ========== */
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--btn-gap);
+  margin-left: var(--btn-offset-left);
+}
+
+/* 按钮基础样式 */
+.menu-btn {
+  min-width: var(--btn-width);
+  padding: var(--btn-v-padding) var(--btn-h-padding);
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--btn-font);
+  color: #8b4530;
+  letter-spacing: var(--btn-letter-spacing);
+  transition: all 0.25s ease;
+  position: relative;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 280 56'%3E%3Cpath d='M28 4 L252 4 Q260 4 264 10 Q268 16 268 24 Q268 32 262 38 L256 44 Q250 52 238 52 L42 52 Q30 52 24 44 L18 38 Q12 32 12 24 Q12 16 16 10 Q20 4 28 4 Z' fill='none' stroke='%23a85c42' stroke-width='1.2'/%3E%3Cpath d='M18 14 Q22 8 30 6 M262 14 Q258 8 250 6 M16 34 Q12 40 18 46 M264 34 Q268 40 262 46' fill='none' stroke='%23c97a5e' stroke-width='0.8'/%3E%3Ccircle cx='14' cy='24' r='3' fill='%23c97a5e'/%3E%3Ccircle cx='266' cy='24' r='3' fill='%23c97a5e'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+/* ========== 各按钮独立微调 ========== */
+.btn-start    { /* margin / padding / font-size 覆盖 */ }
+.btn-continue { /* 例: margin-left: 1vw; */ }
+.btn-settings { /* 例: margin-left: 1vw; */ }
+.btn-about    { /* 例: margin-left: 1vw; */ }
+
+/* ========== hover / active ========== */
+.menu-btn:hover {
+  transform: scale(1.05);
+  filter: brightness(1.08);
+}
+
+.menu-btn:active {
+  transform: scale(0.98);
+}
+
+/* ========== 版本号 ========== */
+.version-tag {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 2rem;
+  color: #9a8876;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+}
+
+/* ========== 响应式适配 ========== */
+@media (max-height: 700px) {
+  .main-menu {
+    --title-top: 6vh;
+    --title-w: 18vw;
+    --title-h: 22vh;
+    --title-btn-gap: 2vh;
+    --btn-width: 16vw;
+    --btn-font: 1.4vw;
+    --btn-gap: 0.8vh;
+    --btn-h-padding: 2vw;
+    --btn-v-padding: 1.4vh;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-menu {
+    --title-left: 6vw;
+    --title-top: 6vh;
+    --title-w: 28vw;
+    --title-h: 22vh;
+    --btn-width: 26vw;
+    --btn-font: 2.2vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-menu {
+    --title-left: 4vw;
+    --title-top: 4vh;
+    --title-w: 36vw;
+    --title-h: 20vh;
+    --title-btn-gap: 2vh;
+    --btn-width: 38vw;
+    --btn-font: 3.2vw;
+    --btn-gap: 1vh;
+  }
+}
