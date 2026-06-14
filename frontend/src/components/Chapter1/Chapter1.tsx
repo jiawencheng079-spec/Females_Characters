@@ -39,6 +39,14 @@ const DIALOG_LINES: DialogLine[] = [
   { speaker: '我',    text: '我答应你。' },
 ]
 
+/** 第二段旁白 — 对话结束后触发 */
+const NARRATION2_LINES = [
+  '这正是你此行的目的。然而这本书中的一些文字，你也无法理解——尤其是最后一句话，它和你所学过的任何范本都对不上。',
+  '你还需要一些线索，或者是帮助。',
+  '或许这个村落本身就蕴含了一些线索。',
+  '你和阿禾开始在村口转悠。信箱、老树、石墙……每一处都像藏着话，又都沉默不语。你知道答案可能就在某个最不起眼的角落，只是还没找到读懂它的方式。',
+]
+
 function Chapter1() {
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [imgNatural, setImgNatural] = useState({ w: 0, h: 0 })
@@ -49,6 +57,9 @@ function Chapter1() {
   const [dialogIndex, setDialogIndex] = useState(0)
   const [dialogActive, setDialogActive] = useState(false)
   const [dialogFinished, setDialogFinished] = useState(false)
+  const [narration2Index, setNarration2Index] = useState(0)
+  const [narration2Active, setNarration2Active] = useState(false)
+  const [narration2Done, setNarration2Done] = useState(false)
   const keysRef = useRef<Set<string>>(new Set())
   const animRef = useRef<number>(0)
   const vpRef = useRef({ w: window.innerWidth, h: window.innerHeight })
@@ -107,7 +118,7 @@ function Chapter1() {
 
   // 动画帧 — WASD 平移（旁白/对话/弹窗期间暂停）
   useEffect(() => {
-    if (!imgReady || showBoundaryInfo || !narrationDone || (dialogActive && !dialogFinished)) return
+    if (!imgReady || showBoundaryInfo || !narrationDone || (dialogActive && !dialogFinished) || (narration2Active && !narration2Done)) return
 
     let lastTime = performance.now()
     const clamp = (v: number, min: number, max: number) =>
@@ -141,7 +152,7 @@ function Chapter1() {
 
     animRef.current = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(animRef.current)
-  }, [imgReady, maxX, maxY, showBoundaryInfo, narrationDone, dialogActive, dialogFinished])
+  }, [imgReady, maxX, maxY, showBoundaryInfo, narrationDone, dialogActive, dialogFinished, narration2Active, narration2Done])
 
   // 图片加载后把初始位置定在画面正中偏上
   useEffect(() => {
@@ -164,12 +175,22 @@ function Chapter1() {
     }
   }
 
-  // 对话点击：下一句 / 结束
+  // 对话点击：下一句 / 结束并开启第二段旁白
   const handleDialogClick = () => {
     if (dialogIndex < DIALOG_LINES.length - 1) {
       setDialogIndex((i) => i + 1)
     } else {
       setDialogFinished(true)
+      setNarration2Active(true)
+    }
+  }
+
+  // 第二段旁白点击：下一句 / 结束
+  const handleNarration2Click = () => {
+    if (narration2Index < NARRATION2_LINES.length - 1) {
+      setNarration2Index((i) => i + 1)
+    } else {
+      setNarration2Done(true)
     }
   }
 
@@ -210,8 +231,8 @@ function Chapter1() {
         </div>
       )}
 
-      {/* WASD 提示 — 对话结束后才显示 */}
-      {dialogFinished && (
+      {/* WASD 提示 — 第二段旁白结束后才显示 */}
+      {narration2Done && (
         <div className="chapter1-hint">
           <span>W A S D</span> 移动视角
         </div>
@@ -255,6 +276,18 @@ function Chapter1() {
 
             {/* 继续提示 */}
             <span className="dialog-next-icon">&#9660;</span>
+          </div>
+        </div>
+      )}
+
+      {/* 第二段旁白 — 对话结束后显示 */}
+      {narration2Active && !narration2Done && (
+        <div className="narration-overlay" onClick={handleNarration2Click}>
+          <div className="narration-box">
+            <p className="narration-line" key={narration2Index}>
+              {NARRATION2_LINES[narration2Index]}
+            </p>
+            <span className="narration-click-hint">点击继续</span>
           </div>
         </div>
       )}
