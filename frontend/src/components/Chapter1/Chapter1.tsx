@@ -52,6 +52,7 @@ function Chapter1() {
   const [imgNatural, setImgNatural] = useState({ w: 0, h: 0 })
   const [imgReady, setImgReady] = useState(false)
   const [showBoundaryInfo, setShowBoundaryInfo] = useState(false)
+  const [letterDropped, setLetterDropped] = useState(false)
   const [narrationIndex, setNarrationIndex] = useState(0)
   const [narrationDone, setNarrationDone] = useState(false)
   const [dialogIndex, setDialogIndex] = useState(0)
@@ -233,9 +234,17 @@ function Chapter1() {
           <img
             src="/assets/FirstLevel/letter.png"
             alt="信箱"
-            className="chapter1-mailbox"
+            className={`chapter1-mailbox${letterDropped ? ' mailbox-open' : ''}`}
             draggable={false}
+            onClick={() => setLetterDropped(true)}
           />
+
+          {/* 掉落的信件 — 替代图 */}
+          {letterDropped && (
+            <div className="dropped-letter">
+              <span className="dropped-letter-icon">&#9993;</span>
+            </div>
+          )}
         </div>
       )}
 

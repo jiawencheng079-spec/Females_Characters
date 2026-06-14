@@ -70,6 +70,52 @@
   filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.5)) brightness(1.1);
 }
 
+/* 信箱打开后不再响应 hover */
+.chapter1-mailbox.mailbox-open {
+  cursor: default;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+}
+
+/* ========== 掉落信件 ========== */
+.dropped-letter {
+  position: absolute;
+  left: 69%;
+  bottom: 18%;
+  width: 3.5%;
+  aspect-ratio: 3 / 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f5efe0, #e8dcc8);
+  border: 1px solid #c4a97a;
+  border-radius: 2px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  animation: letterDrop 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  pointer-events: none;
+}
+
+.dropped-letter-icon {
+  font-size: 1.4em;
+  opacity: 0.7;
+}
+
+@keyframes letterDrop {
+  0% {
+    opacity: 0;
+    transform: translateY(-120%) rotate(-15deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-30%) rotate(5deg);
+  }
+  70% {
+    transform: translateY(0%) rotate(-2deg);
+  }
+  100% {
+    transform: translateY(0%) rotate(0deg);
+  }
+}
+
 /* ========== WASD 操作提示 ========== */
 .chapter1-hint {
   position: absolute;
