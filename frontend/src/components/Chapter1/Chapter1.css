@@ -54,6 +54,22 @@
   filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.5)) brightness(1.1);
 }
 
+/* ========== 信箱装饰 ========== */
+.chapter1-mailbox {
+  position: absolute;
+  left: 67%;
+  bottom: 26%;
+  width: 5%;
+  height: auto;
+  cursor: pointer;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+  transition: filter 0.2s;
+}
+
+.chapter1-mailbox:hover {
+  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.5)) brightness(1.1);
+}
+
 /* ========== WASD 操作提示 ========== */
 .chapter1-hint {
   position: absolute;

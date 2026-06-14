@@ -228,6 +228,14 @@ function Chapter1() {
             draggable={false}
             onClick={() => setShowBoundaryInfo(true)}
           />
+
+          {/* 信箱装饰 */}
+          <img
+            src="/assets/FirstLevel/letter.png"
+            alt="信箱"
+            className="chapter1-mailbox"
+            draggable={false}
+          />
         </div>
       )}
 
