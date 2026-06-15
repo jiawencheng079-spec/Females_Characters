@@ -1,3 +1,6 @@
+import type { DictionaryPuzzle } from '../../systems/dictionary'
+import { clueContent } from './embroideryRoomSceneData'
+
 export const clueOrder = ['红妆', '女红', '灯', '今', '名', '言'] as const
 
 export type ClueName = (typeof clueOrder)[number]
@@ -39,24 +42,17 @@ export type SceneObjectConfig =
   | ClueSceneObjectConfig
   | CultureSceneObjectConfig
 
-export type DialoguePuzzleOption = {
-  id: string
-  label: string
-}
-
-export type DialoguePuzzleConfig = {
+export type DialoguePuzzleConfig = Pick<
+  DictionaryPuzzle,
+  'activeEntryId' | 'contextSentence' | 'correctEntryId'
+> & {
   id: string
   label: DialogueClueName
-  meaning: string
   nushuImage: string
   beforeLines: readonly string[]
   puzzleLine: string
   solvedLine: string
   afterLines: readonly string[]
-  contextSentence: string
-  options: readonly DialoguePuzzleOption[]
-  correctOption: string
-  unlockedText: string
 }
 
 export type NpcConfig = {
@@ -71,27 +67,26 @@ export type NpcConfig = {
 
 export const nushuImages: Record<ClueName, readonly string[]> = {
   红妆: [
-    '/assets/embroidery-room/nushu/hong.png',
-    '/assets/embroidery-room/nushu/zhuang.png',
+    '/assets/nushu/hong.png',
+    '/assets/nushu/zhuang.png',
   ],
   女红: [
-    '/assets/embroidery-room/nushu/nv.png',
-    '/assets/embroidery-room/nushu/hong.png',
+    '/assets/nushu/nv.png',
+    '/assets/nushu/hong.png',
   ],
-  灯: ['/assets/embroidery-room/nushu/deng.png'],
-  今: ['/assets/embroidery-room/nushu/jin.png'],
-  名: ['/assets/embroidery-room/nushu/ming.png'],
-  言: ['/assets/embroidery-room/nushu/yan.png'],
+  灯: ['/assets/nushu/deng.png'],
+  今: ['/assets/nushu/jin.png'],
+  名: ['/assets/nushu/ming.png'],
+  言: ['/assets/nushu/yan.png'],
 }
 
 export const sceneObjects: readonly SceneObjectConfig[] = [
   {
     id: 'red-makeup',
     kind: 'clue',
-    title: '红妆',
-    description:
-      '旧时女子出嫁时的衣饰与妆奁，也承载着家族祝愿和女性之间的情谊。',
-    image: '/assets/embroidery-room/clues/hongzhuang.png',
+    title: clueContent['red-makeup'].title,
+    description: clueContent['red-makeup'].description,
+    image: '/assets/scenes/embroidery-room/props/red-makeup.png',
     nushuImages: nushuImages.红妆,
     imagePosition: { left: '13%', top: '57%', width: '17%' },
     hotspotPosition: {
@@ -105,10 +100,9 @@ export const sceneObjects: readonly SceneObjectConfig[] = [
   {
     id: 'needlework',
     kind: 'clue',
-    title: '女红',
-    description:
-      '纺织、缝纫、刺绣等传统技艺的统称。针线既是日常劳作，也是表达与记录。',
-    image: '/assets/embroidery-room/clues/nugong.png',
+    title: clueContent.needlework.title,
+    description: clueContent.needlework.description,
+    image: '/assets/scenes/embroidery-room/props/needlework.png',
     nushuImages: nushuImages.女红,
     imagePosition: { left: '37%', top: '56%', width: '17%' },
     hotspotPosition: {
@@ -122,10 +116,9 @@ export const sceneObjects: readonly SceneObjectConfig[] = [
   {
     id: 'lamp',
     kind: 'clue',
-    title: '灯',
-    description:
-      '灯下赶绣，是女红空间常见的生活图景。微光照见针脚，也守着未说完的话。',
-    image: '/assets/embroidery-room/clues/deng.png',
+    title: clueContent.lamp.title,
+    description: clueContent.lamp.description,
+    image: '/assets/scenes/embroidery-room/props/lamp.png',
     nushuImages: nushuImages.灯,
     imagePosition: { left: '69%', top: '49%', width: '14%' },
     hotspotPosition: {
@@ -139,10 +132,9 @@ export const sceneObjects: readonly SceneObjectConfig[] = [
   {
     id: 'handkerchief',
     kind: 'culture',
-    title: '绣帕',
-    description:
-      '方帕既是贴身日用品，也常作为赠礼。花纹、名字与文字让它成为情感的凭证。',
-    image: '/assets/embroidery-room/items/xiupa.png',
+    title: clueContent.handkerchief.title,
+    description: clueContent.handkerchief.description,
+    image: '/assets/scenes/embroidery-room/props/handkerchief.png',
     imagePosition: { left: '61%', top: '62%', width: '13.5%' },
     hotspotPosition: {
       left: '63%',
@@ -153,12 +145,11 @@ export const sceneObjects: readonly SceneObjectConfig[] = [
     ariaLabel: '查看文化物件绣帕',
   },
   {
-    id: 'needle-basket',
+    id: 'sewing-basket',
     kind: 'culture',
-    title: '女红篮 / 针线',
-    description:
-      '女红篮收纳布料、绣线、针剪等工具。篮中的针线既服务于日常劳作，也在布面上留下女性的表达。',
-    image: '/assets/embroidery-room/items/needle-basket.png',
+    title: clueContent['sewing-basket'].title,
+    description: clueContent['sewing-basket'].description,
+    image: '/assets/scenes/embroidery-room/props/sewing-basket.png',
     imagePosition: { left: '76%', top: '58%', width: '14%' },
     hotspotPosition: {
       left: '77%',
@@ -169,12 +160,11 @@ export const sceneObjects: readonly SceneObjectConfig[] = [
     ariaLabel: '查看文化物件女红篮和针线',
   },
   {
-    id: 'comb-mirror',
+    id: 'mirror-box',
     kind: 'culture',
-    title: '木梳 / 镜匣',
-    description:
-      '木梳用于日常理发，也寄托顺遂相守的愿望；镜匣收纳铜镜与梳妆小物，保存着女性私密的生活痕迹。',
-    image: '/assets/embroidery-room/items/comb-mirror.png',
+    title: clueContent['mirror-box'].title,
+    description: clueContent['mirror-box'].description,
+    image: '/assets/scenes/embroidery-room/props/mirror-box.png',
     imagePosition: { left: '87%', top: '61%', width: '13%' },
     hotspotPosition: {
       left: '87.2%',
@@ -186,55 +176,42 @@ export const sceneObjects: readonly SceneObjectConfig[] = [
   },
 ]
 
-const dialogueOptions: readonly DialoguePuzzleOption[] = [
-  { id: 'today', label: '今日' },
-  { id: 'name', label: '名字' },
-  { id: 'speak', label: '说话' },
-  { id: 'lamplight', label: '灯火' },
-]
-
 export const dialoguePuzzles: readonly DialoguePuzzleConfig[] = [
   {
-    id: 'today',
+    id: 'embroiderer-jin',
     label: '今',
-    meaning: '今日',
-    nushuImage: '/assets/embroidery-room/nushu/jin.png',
+    activeEntryId: 'jin',
+    correctEntryId: 'jin',
+    nushuImage: '/assets/nushu/jin.png',
     beforeLines: ['这方帕，不能拖到明日了。'],
     puzzleLine: '我{{nushu}}日就要把它绣完。',
     solvedLine: '我今日就要把它绣完。',
     afterLines: [],
     contextSentence: '我 {{nushu}} 日就要把它绣完。',
-    options: dialogueOptions,
-    correctOption: 'today',
-    unlockedText: '已解锁：今 / 今日',
   },
   {
-    id: 'name',
+    id: 'embroiderer-ming',
     label: '名',
-    meaning: '名字',
-    nushuImage: '/assets/embroidery-room/nushu/ming.png',
+    activeEntryId: 'ming',
+    correctEntryId: 'ming',
+    nushuImage: '/assets/nushu/ming.png',
     beforeLines: ['送人的帕，不能只绣花。'],
     puzzleLine: '帕角要留她的{{nushu}}。',
     solvedLine: '帕角要留她的名。',
     afterLines: ['这样多年以后，也还记得是谁送的。'],
     contextSentence: '帕角要留她的 {{nushu}} 。',
-    options: dialogueOptions,
-    correctOption: 'name',
-    unlockedText: '已解锁：名 / 名字',
   },
   {
-    id: 'speak',
+    id: 'embroiderer-yan',
     label: '言',
-    meaning: '说话',
-    nushuImage: '/assets/embroidery-room/nushu/yan.png',
+    activeEntryId: 'yan',
+    correctEntryId: 'yan',
+    nushuImage: '/assets/nushu/yan.png',
     beforeLines: ['有些话，到了出门那日，反倒说不出口。'],
     puzzleLine: '口中不能{{nushu}}，就让针线替她写。',
     solvedLine: '口中不能言，就让针线替她写。',
     afterLines: ['所以帕上的字，不只是字。'],
     contextSentence: '口中不能 {{nushu}} ，就让针线替她写。',
-    options: dialogueOptions,
-    correctOption: 'speak',
-    unlockedText: '已解锁：言 / 说话',
   },
 ]
 

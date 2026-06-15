@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import type { DictionaryPuzzle } from '../../systems/dictionary'
+import EmbroideryRoomScene from './EmbroideryRoomScene'
 import {
   clueOrder,
   dialoguePuzzles,
@@ -8,45 +10,47 @@ import {
   type DialoguePuzzleConfig,
   type SceneObjectConfig,
 } from './embroideryRoomData'
+import type { EmbroideryRoomPropId } from './embroideryRoomSceneData'
 import './EmbroideryRoom.css'
 
 const CAMERA_SPEED = 620
 const NUSHU_TOKEN = '{{nushu}}'
 
-function renderPuzzleSentence(
-  sentence: string,
-  puzzle: DialoguePuzzleConfig,
-  interactive: boolean,
-  onOpenDictionary?: () => void,
-) {
+type PuzzleSentenceProps = {
+  sentence: string
+  puzzle: DialoguePuzzleConfig
+  onOpenDictionary: () => void
+}
+
+function PuzzleSentence({
+  sentence,
+  puzzle,
+  onOpenDictionary,
+}: PuzzleSentenceProps) {
   const [before, after] = sentence.split(NUSHU_TOKEN)
 
   return (
     <>
       {before}
-      {interactive ? (
-        <button
-          className="inline-nushu-button"
-          type="button"
-          onClick={onOpenDictionary}
-          aria-label={`破译女书字，线索${puzzle.label}`}
-        >
-          <img src={puzzle.nushuImage} alt="待破译女书字" />
-          <span>点击破译</span>
-        </button>
-      ) : (
-        <img
-          className="inline-nushu-image"
-          src={puzzle.nushuImage}
-          alt="待破译女书字"
-        />
-      )}
+      <button
+        className="inline-nushu-button"
+        type="button"
+        onClick={onOpenDictionary}
+        aria-label={`破译女书字，线索${puzzle.label}`}
+      >
+        <img src={puzzle.nushuImage} alt="待破译女书字" />
+        <span>点击破译</span>
+      </button>
       {after}
     </>
   )
 }
 
-function EmbroideryRoom() {
+type EmbroideryRoomProps = {
+  openDictionary: (puzzle: DictionaryPuzzle) => void
+}
+
+function EmbroideryRoom({ openDictionary }: EmbroideryRoomProps) {
   const viewportRef = useRef<HTMLElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const cameraInitializedRef = useRef(false)
@@ -59,10 +63,7 @@ function EmbroideryRoom() {
   const [activeCard, setActiveCard] = useState<SceneObjectConfig | null>(null)
   const [puzzleIndex, setPuzzleIndex] = useState(0)
   const [isDialogueOpen, setIsDialogueOpen] = useState(false)
-  const [isDictionaryOpen, setIsDictionaryOpen] = useState(false)
   const [isCurrentPuzzleSolved, setIsCurrentPuzzleSolved] = useState(false)
-  const [dictionaryFeedback, setDictionaryFeedback] = useState('')
-  const [unlockFeedback, setUnlockFeedback] = useState('')
   const [isClueTrayOpen, setIsClueTrayOpen] = useState(false)
   const isComplete = collected.size === clueOrder.length
   const allNpcPuzzlesSolved = puzzleIndex >= dialoguePuzzles.length
@@ -160,10 +161,7 @@ function EmbroideryRoom() {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
 
-      if (isDictionaryOpen) {
-        setIsDictionaryOpen(false)
-        setDictionaryFeedback('')
-      } else if (isDialogueOpen) {
+      if (isDialogueOpen) {
         setIsDialogueOpen(false)
       } else {
         setActiveCard(null)
@@ -172,7 +170,7 @@ function EmbroideryRoom() {
 
     window.addEventListener('keydown', closeOnEscape)
     return () => window.removeEventListener('keydown', closeOnEscape)
-  }, [hasModalOpen, isDialogueOpen, isDictionaryOpen])
+  }, [hasModalOpen, isDialogueOpen])
 
   useEffect(
     () => () => {
@@ -196,6 +194,11 @@ function EmbroideryRoom() {
     setIsClueTrayOpen(false)
   }
 
+  const openSceneProp = (propId: EmbroideryRoomPropId) => {
+    const sceneObject = sceneObjects.find((candidate) => candidate.id === propId)
+    if (sceneObject) openSceneObject(sceneObject)
+  }
+
   const talkToEmbroiderer = () => {
     if (isDialogueOpen) return
 
@@ -206,45 +209,35 @@ function EmbroideryRoom() {
 
     setActiveCard(null)
     setIsDialogueOpen(true)
-    setIsDictionaryOpen(false)
     setIsCurrentPuzzleSolved(false)
-    setDictionaryFeedback('')
-    setUnlockFeedback('')
     setIsClueTrayOpen(false)
   }
 
-  const openDictionary = () => {
+  const openCurrentPuzzleDictionary = () => {
     if (!currentPuzzle || isCurrentPuzzleSolved) return
-    setDictionaryFeedback('')
-    setIsDictionaryOpen(true)
-  }
 
-  const selectDictionaryOption = (optionId: string) => {
-    if (!currentPuzzle) return
+    openDictionary({
+      puzzleId: currentPuzzle.id,
+      activeEntryId: currentPuzzle.activeEntryId,
+      contextSentence: currentPuzzle.contextSentence,
+      correctEntryId: currentPuzzle.correctEntryId,
+      onSuccess: () => {
+        collectClue(currentPuzzle.label)
+        setIsCurrentPuzzleSolved(true)
 
-    if (optionId !== currentPuzzle.correctOption) {
-      setDictionaryFeedback('这个意思好像对不上这句话。')
-      return
-    }
+        progressionTimerRef.current = window.setTimeout(() => {
+          const nextIndex = puzzleIndex + 1
+          setPuzzleIndex(nextIndex)
+          setIsCurrentPuzzleSolved(false)
 
-    collectClue(currentPuzzle.label)
-    setIsCurrentPuzzleSolved(true)
-    setIsDictionaryOpen(false)
-    setDictionaryFeedback('')
-    setUnlockFeedback(currentPuzzle.unlockedText)
+          if (nextIndex >= dialoguePuzzles.length) {
+            setIsDialogueOpen(false)
+          }
 
-    progressionTimerRef.current = window.setTimeout(() => {
-      const nextIndex = puzzleIndex + 1
-      setPuzzleIndex(nextIndex)
-      setIsCurrentPuzzleSolved(false)
-      setUnlockFeedback('')
-
-      if (nextIndex >= dialoguePuzzles.length) {
-        setIsDialogueOpen(false)
-      }
-
-      progressionTimerRef.current = null
-    }, 1600)
+          progressionTimerRef.current = null
+        }, 1600)
+      },
+    })
   }
 
   const closeDialogue = () => {
@@ -259,9 +252,6 @@ function EmbroideryRoom() {
       )
     }
 
-    setIsDictionaryOpen(false)
-    setDictionaryFeedback('')
-    setUnlockFeedback('')
     setIsCurrentPuzzleSolved(false)
     setIsDialogueOpen(false)
   }
@@ -279,23 +269,11 @@ function EmbroideryRoom() {
           className="scene-world"
           style={{ transform: `translate3d(${-cameraX}px, 0, 0)` }}
         >
-          <img
-            className="scene-background"
-            src="/assets/embroidery-room/background/embroidery-room-bg.png"
-            alt=""
-            draggable="false"
+          <EmbroideryRoomScene
+            activePropId={activeCard?.id as EmbroideryRoomPropId | undefined}
+            onSelectProp={openSceneProp}
+            onClearSelection={() => setActiveCard(null)}
           />
-
-          {sceneObjects.map((sceneObject) => (
-            <img
-              className={`world-prop world-prop-${sceneObject.kind}`}
-              src={sceneObject.image}
-              style={sceneObject.imagePosition}
-              alt=""
-              draggable="false"
-              key={`${sceneObject.id}-image`}
-            />
-          ))}
 
           <img
             className="world-npc"
@@ -304,20 +282,6 @@ function EmbroideryRoom() {
             alt=""
             draggable="false"
           />
-
-          {sceneObjects.map((sceneObject) => (
-            <button
-              className="world-hotspot"
-              style={sceneObject.hotspotPosition}
-              type="button"
-              onClick={() => openSceneObject(sceneObject)}
-              aria-label={sceneObject.ariaLabel}
-              key={`${sceneObject.id}-hotspot`}
-            >
-              <span className="hotspot-marker" />
-              <span className="hotspot-label">{sceneObject.title}</span>
-            </button>
-          ))}
 
           <button
             className="world-hotspot hotspot-npc"
@@ -335,8 +299,8 @@ function EmbroideryRoom() {
 
         <div className="game-hud">
           <div className="scene-title">
-            <span>三朝书 · 副场景一</span>
-            <strong>绣帕 / 女红空间</strong>
+            <span>三朝书 · SAN CHAO SHU</span>
+            <strong>女红空间</strong>
           </div>
 
           <button
@@ -454,11 +418,12 @@ function EmbroideryRoom() {
                     <p>
                       {isCurrentPuzzleSolved
                         ? currentPuzzle.solvedLine
-                        : renderPuzzleSentence(
-                            currentPuzzle.puzzleLine,
-                            currentPuzzle,
-                            true,
-                            openDictionary,
+                        : (
+                            <PuzzleSentence
+                              sentence={currentPuzzle.puzzleLine}
+                              puzzle={currentPuzzle}
+                              onOpenDictionary={openCurrentPuzzleDictionary}
+                            />
                           )}
                     </p>
                     {currentPuzzle.afterLines.map((line) => (
@@ -471,78 +436,6 @@ function EmbroideryRoom() {
               </div>
             </div>
           </section>
-        )}
-
-        {isDictionaryOpen && currentPuzzle && (
-          <aside
-            className="dictionary-panel"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="dictionary-title"
-          >
-            <header>
-              <div>
-                <span>女书词典</span>
-                <h2 id="dictionary-title">选择这个字的含义</h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsDictionaryOpen(false)
-                  setDictionaryFeedback('')
-                }}
-                aria-label="关闭词典"
-              >
-                ×
-              </button>
-            </header>
-
-            <div className="dictionary-character">
-              <span>当前待解字</span>
-              <img src={currentPuzzle.nushuImage} alt="当前待解女书字" />
-            </div>
-
-            <div className="dictionary-context">
-              <span>它出现在这句话里</span>
-              <p>
-                “
-                {renderPuzzleSentence(
-                  currentPuzzle.contextSentence,
-                  currentPuzzle,
-                  false,
-                )}
-                ”
-              </p>
-            </div>
-
-            <div className="dictionary-options">
-              {currentPuzzle.options.map((option, index) => (
-                <button
-                  type="button"
-                  onClick={() => selectDictionaryOption(option.id)}
-                  key={option.id}
-                >
-                  <span>{String.fromCharCode(65 + index)}</span>
-                  {option.label}
-                </button>
-              ))}
-            </div>
-
-            <p
-              className={`dictionary-feedback${
-                dictionaryFeedback ? ' is-visible' : ''
-              }`}
-              role="status"
-            >
-              {dictionaryFeedback}
-            </p>
-          </aside>
-        )}
-
-        {unlockFeedback && (
-          <div className="unlock-feedback" role="status">
-            {unlockFeedback}
-          </div>
         )}
 
         {activeCard && (
