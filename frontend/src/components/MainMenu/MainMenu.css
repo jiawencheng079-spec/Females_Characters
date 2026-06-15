@@ -108,6 +108,18 @@
 .btn-settings { /* 例: margin-left: 1vw; */ }
 .btn-about    { /* 例: margin-left: 1vw; */ }
 
+.menu-btn.disabled,
+.menu-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  filter: grayscale(0.6);
+  pointer-events: none;
+}
+.menu-btn:disabled:hover {
+  transform: none;
+  filter: grayscale(0.6);
+}
+
 /* ========== hover / active ========== */
 .menu-btn:hover {
   transform: scale(1.05);

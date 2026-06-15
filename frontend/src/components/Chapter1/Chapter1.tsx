@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import './Chapter1.css'
+import { ProgressStage } from '../../utils/gameSave'
 
 const MOVE_SPEED = 500 // 像素/秒
 
@@ -122,7 +123,13 @@ const getQuizWrongFeedback = (question: number, choice: string): string => {
   return '......真的有这种词存在吗？'
 }
 
-function Chapter1() {
+interface Chapter1Props {
+  resumeProgress: number
+  onLeave: (progress: number) => void
+  onComplete: () => void
+}
+
+function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [imgNatural, setImgNatural] = useState({ w: 0, h: 0 })
   const [imgReady, setImgReady] = useState(false)
@@ -269,6 +276,51 @@ function Chapter1() {
       y: Math.max(0, centerY),
     })
   }, [imgReady, maxX, maxY])
+
+  // 计算当前进度（存档用）
+  const getSaveProgress = (): ProgressStage => {
+    if (matchFinalStage > 0) return ProgressStage.IN_Q4
+    if (matchActive) return ProgressStage.IN_MATCH
+    if (quizDone) return ProgressStage.MATCH_Q3
+    if (quizActive) return ProgressStage.QUIZ
+    if (narration2Done) return ProgressStage.QUIZ
+    if (narration2Active) return ProgressStage.NARRATION2
+    if (dialogFinished) return ProgressStage.NARRATION2
+    if (dialogActive || narrationDone) return ProgressStage.DIALOG
+    return ProgressStage.NOT_STARTED
+  }
+
+  // 恢复存档进度：快进到对应阶段
+  useEffect(() => {
+    if (resumeProgress <= ProgressStage.NOT_STARTED) return
+    // 按阶段依次快进
+    if (resumeProgress >= ProgressStage.DIALOG) {
+      setNarrationDone(true)
+      setDialogActive(true)
+    }
+    if (resumeProgress >= ProgressStage.NARRATION2) {
+      setDialogFinished(true)
+      setDialogActive(false)
+      setNarration2Active(true)
+    }
+    if (resumeProgress >= ProgressStage.QUIZ) {
+      setNarration2Done(true)
+      setNarration2Active(false)
+    }
+    if (resumeProgress >= ProgressStage.MATCH_Q3) {
+      setQuizDone(true)
+      setQuizActive(false)
+    }
+    if (resumeProgress >= ProgressStage.IN_MATCH) {
+      // 直接打开匹配游戏
+      setQuizDone(true)
+      setQuizActive(false)
+      setMatchActive(true)
+      setMatchStep(1)
+    }
+    // IN_Q4 / DONE 难以精确恢复，从匹配游戏开始即可
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // 仅在挂载时执行一次
 
   // 旁白点击：下一句 / 结束并开启对话
   const handleNarrationClick = () => {
@@ -530,7 +582,8 @@ function Chapter1() {
   // Q4 — 关闭反馈
   const closeQ4Feedback = () => {
     if (matchFinalFeedback === 'correct') {
-      // 全部完成
+      // 全部完成，清除存档
+      onComplete()
       setMatchFinalFeedback(null)
       setMatchFinalStage(0)
       setMatchActive(false)
@@ -634,6 +687,15 @@ function Chapter1() {
           三朝书
         </button>
       )}
+
+      {/* 离开按钮 — 右上角，保存进度并返回主菜单 */}
+      <button
+        className="chapter1-leave-btn"
+        onClick={() => onLeave(getSaveProgress())}
+        title="保存并离开"
+      >
+        离开
+      </button>
 
       {/* 开场旁白 */}
       {!narrationDone && (

@@ -8,9 +8,10 @@ interface MainMenuProps {
   onContinueGame: () => void
   onSettings: () => void
   onAbout: () => void
+  hasSavedGame: boolean
 }
 
-function MainMenu({ onStartGame, onContinueGame, onSettings, onAbout }: MainMenuProps) {
+function MainMenu({ onStartGame, onContinueGame, onSettings, onAbout, hasSavedGame }: MainMenuProps) {
   const [showAbout, setShowAbout] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
 
@@ -45,7 +46,11 @@ function MainMenu({ onStartGame, onContinueGame, onSettings, onAbout }: MainMenu
           <button className="menu-btn btn-start" onClick={onStartGame}>
             开始游戏
           </button>
-          <button className="menu-btn btn-continue" onClick={onContinueGame}>
+          <button
+            className={`menu-btn btn-continue${!hasSavedGame ? ' disabled' : ''}`}
+            onClick={onContinueGame}
+            disabled={!hasSavedGame}
+          >
             继续游戏
           </button>
           <button className="menu-btn btn-settings" onClick={handleSettings}>
