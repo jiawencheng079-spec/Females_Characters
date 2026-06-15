@@ -872,9 +872,8 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
             <button className="quiz-image-close" onClick={closeQuizImage}>关闭</button>
             {quizQuestion === 1 ? (
               <div className="quiz-image-wrapper">
-                {/* TODO: 替换为实际女书字图片 */}
                 <img
-                  src="/assets/FirstLevel/location.png"
+                  src="/assets/FirstLevel/Q1.png"
                   alt="女书字"
                   className="quiz-image-placeholder"
                 />
