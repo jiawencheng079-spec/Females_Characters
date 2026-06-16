@@ -158,6 +158,7 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
   const [quizNarrationOpen, setQuizNarrationOpen] = useState(false)
   const [quizLetterMode, setQuizLetterMode] = useState(false)
   const [quizDone, setQuizDone] = useState(false)
+  const [quizDismissed, setQuizDismissed] = useState(false) // Q1/Q2 关闭后是否可重开
   // Q3 匹配游戏
   const [matchActive, setMatchActive] = useState(false)
   const [matchStep, setMatchStep] = useState(0) // 0=阿禾说话, 1=匹配界面
@@ -381,8 +382,18 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
       // Q2 选项已在图片弹窗内同屏展示，无需单独打开
       if (quizQuestion !== 2) {
         setQuizChoicesOpen(true)
+      } else {
+        // Q2 关闭后标记可重开
+        setQuizDismissed(true)
       }
     }
+  }
+
+  // 重新打开 Q2 答题（关闭后重开）
+  const reopenQuiz = () => {
+    setQuizDismissed(false)
+    setQuizImageOpen(true)
+    setQuizImageStep(1)
   }
 
   // 开始 Quiz 图片阶段
@@ -399,6 +410,7 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
   // 选择答案
   const handleQuizChoice = (choice: string) => {
     setQuizChoicesOpen(false)
+    setQuizDismissed(false)
     // Q2 选项在图片弹窗内，关闭图片弹窗
     if (quizQuestion === 2) {
       setQuizImageOpen(false)
@@ -717,6 +729,17 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
           onClick={reopenMatchGame}
         >
           继续回忆
+        </button>
+      )}
+
+      {/* Q2 答题重开按钮 — 关闭图片弹窗后显示 */}
+      {quizDismissed && !quizDone && !quizActive && (
+        <button
+          className="chapter1-book-btn"
+          style={{ top: bookPopupShown ? '3.2rem' : '1rem' }}
+          onClick={reopenQuiz}
+        >
+          继续思考
         </button>
       )}
 
