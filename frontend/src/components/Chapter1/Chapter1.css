@@ -59,7 +59,7 @@
   position: absolute;
   left: 67%;
   bottom: 26%;
-  width: 5%;
+  width: 2%;
   height: auto;
   cursor: pointer;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
@@ -79,9 +79,9 @@
 /* ========== 掉落信件 ========== */
 .dropped-letter {
   position: absolute;
-  left: 69%;
-  bottom: 18%;
-  width: 3.5%;
+  left: 68.5%;
+  bottom: 23%;
+  width: 0.875%;
   aspect-ratio: 3 / 4;
   display: flex;
   align-items: center;
@@ -96,7 +96,7 @@
 }
 
 .dropped-letter-icon {
-  font-size: 1.4em;
+  font-size: 0.35em;
   opacity: 0.7;
 }
 
