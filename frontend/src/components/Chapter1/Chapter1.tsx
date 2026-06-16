@@ -601,7 +601,7 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
     }
   }
 
-  // Q3 匹配游戏 — 关闭匹配界面
+  // Q3 匹配游戏 — 关闭匹配界面（保留状态，添加重开按钮）
   const closeMatchGame = () => {
     setMatchActive(false)
     setMatchStep(0)
@@ -614,7 +614,21 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
     setMatchAllWrong(false)
     setMatchFinalStage(0)
     setMatchFinalFeedback(null)
-    setQuizDone(true)
+  }
+
+  // 重新打开Q3匹配游戏
+  const reopenMatchGame = () => {
+    setMatchActive(true)
+    setMatchStep(1)
+    setMatchPlacements({})
+    setDraggingItem(null)
+    setDragOverCat(null)
+    setMatchCommentary(null)
+    setMatchCatCommentary(null)
+    setMatchCategoryDone(new Set())
+    setMatchAllWrong(false)
+    setMatchFinalStage(0)
+    setMatchFinalFeedback(null)
   }
 
   return (
@@ -684,6 +698,17 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
           onClick={() => setShowBookSystem(true)}
         >
           三朝书
+        </button>
+      )}
+
+      {/* Q3 匹配游戏重开按钮 — 关闭匹配游戏后显示 */}
+      {quizDone && !matchActive && matchFinalStage === 0 && (
+        <button
+          className="chapter1-book-btn"
+          style={{ top: bookPopupShown ? '3.2rem' : '1rem' }}
+          onClick={reopenMatchGame}
+        >
+          继续回忆
         </button>
       )}
 
