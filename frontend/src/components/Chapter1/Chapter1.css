@@ -691,6 +691,14 @@
   animation: slideUp 0.35s ease;
 }
 
+/* Q2 同屏弹窗 — 图片+选项，更宽 */
+.quiz-q2-popup {
+  width: min(600px, 92vw);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding-top: 2.5rem;
+}
+
 .quiz-image-close {
   position: absolute;
   top: 0.6rem;

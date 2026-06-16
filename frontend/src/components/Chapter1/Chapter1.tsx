@@ -378,7 +378,10 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
     } else {
       setQuizImageOpen(false)
       setQuizImageStep(0)
-      setQuizChoicesOpen(true)
+      // Q2 选项已在图片弹窗内同屏展示，无需单独打开
+      if (quizQuestion !== 2) {
+        setQuizChoicesOpen(true)
+      }
     }
   }
 
@@ -396,6 +399,11 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
   // 选择答案
   const handleQuizChoice = (choice: string) => {
     setQuizChoicesOpen(false)
+    // Q2 选项在图片弹窗内，关闭图片弹窗
+    if (quizQuestion === 2) {
+      setQuizImageOpen(false)
+      setQuizImageStep(0)
+    }
     setQuizLastChoice(choice)
     if (choice === currentCorrect) {
       setQuizFeedback('correct')
@@ -888,28 +896,46 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
         </div>
       )}
 
-      {/* Quiz 图片弹窗 — 展示图片（Q1 单图 / Q2 四图） */}
-      {quizImageOpen && quizImageStep === 1 && (
+      {/* Quiz 图片弹窗 — Q1 单图 */}
+      {quizImageOpen && quizImageStep === 1 && quizQuestion === 1 && (
         <div className="quiz-image-overlay" onClick={closeQuizImage}>
           <div className="quiz-image-popup" onClick={(e) => e.stopPropagation()}>
             <button className="quiz-image-close" onClick={closeQuizImage}>关闭</button>
-            {quizQuestion === 1 ? (
-              <div className="quiz-image-wrapper">
-                <img
-                  src="/assets/FirstLevel/Q1.png"
-                  alt="女书字"
-                  className="quiz-image-placeholder"
-                />
-              </div>
-            ) : (
-              <div className="quiz-image-grid">
-                <img src="/assets/FirstLevel/forget1.png" alt="忘记·字1" className="quiz-grid-img" />
-                <img src="/assets/FirstLevel/forget2.png" alt="忘记·字2" className="quiz-grid-img" />
-                <img src="/assets/FirstLevel/remember1.png" alt="记得·字1" className="quiz-grid-img" />
-                <img src="/assets/FirstLevel/remember2.png" alt="记得·字2" className="quiz-grid-img" />
-              </div>
-            )}
+            <div className="quiz-image-wrapper">
+              <img
+                src="/assets/FirstLevel/Q1.png"
+                alt="女书字"
+                className="quiz-image-placeholder"
+              />
+            </div>
             <span className="quiz-click-hint">点击任意处继续</span>
+          </div>
+        </div>
+      )}
+
+      {/* Quiz 图片弹窗 — Q2 四图 + 选项同屏显示 */}
+      {quizImageOpen && quizImageStep === 1 && quizQuestion === 2 && (
+        <div className="quiz-image-overlay">
+          <div className="quiz-image-popup quiz-q2-popup" onClick={(e) => e.stopPropagation()}>
+            <button className="quiz-image-close" onClick={closeQuizImage}>关闭</button>
+            <div className="quiz-image-grid">
+              <img src="/assets/FirstLevel/forget1.png" alt="忘记·字1" className="quiz-grid-img" />
+              <img src="/assets/FirstLevel/forget2.png" alt="忘记·字2" className="quiz-grid-img" />
+              <img src="/assets/FirstLevel/remember1.png" alt="记得·字1" className="quiz-grid-img" />
+              <img src="/assets/FirstLevel/remember2.png" alt="记得·字2" className="quiz-grid-img" />
+            </div>
+            <p className="quiz-choices-title">请选择正确的含义：</p>
+            <div className="quiz-choices-grid">
+              {QUIZ_Q2_CHOICES.map((label, i) => {
+                const key = String.fromCharCode(65 + i)
+                return (
+                  <button key={key} className="quiz-choice-btn" onClick={() => handleQuizChoice(key)}>
+                    <span className="quiz-choice-key">{key}</span>
+                    <span className="quiz-choice-label">{label}</span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
       )}
