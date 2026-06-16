@@ -1026,8 +1026,11 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
                         {catItems.map((item, j) => (
                           <span
                             key={j}
-                            className="match-cat-chip"
-                            title="点击移除"
+                            className={`match-cat-chip${draggingItem === item ? ' dragging' : ''}`}
+                            title="点击移除，或拖入其他盒子"
+                            draggable
+                            onDragStart={(e) => handleMatchDragStart(item, e)}
+                            onDragEnd={handleMatchDragEnd}
                             onClick={() => removeMatchPlacement(item)}
                           >
                             {item}
