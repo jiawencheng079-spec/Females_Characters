@@ -11,7 +11,13 @@ interface MainMenuProps {
   hasSavedGame: boolean
 }
 
-function MainMenu({ onStartGame, onContinueGame, onSettings, onAbout, hasSavedGame }: MainMenuProps) {
+function MainMenu({
+  onStartGame,
+  onContinueGame,
+  onSettings,
+  onAbout,
+  hasSavedGame,
+}: MainMenuProps) {
   const [showAbout, setShowAbout] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
 
@@ -27,49 +33,58 @@ function MainMenu({ onStartGame, onContinueGame, onSettings, onAbout, hasSavedGa
 
   return (
     <div className="main-menu">
-      {/* 背景图 */}
       <div className="main-menu-bg" />
 
-      {/* 内容层 */}
       <div className="main-menu-content">
-        {/* 标题区域 — 用图片覆盖 */}
-        <div className="title-area">
+        <section className="main-menu-title" aria-label="三朝书">
           <img
-            src="/assets/nushu/title_logo.png"
+            src="/assets/main-menu/title_logo.png"
             alt="三朝书"
             className="title-logo"
           />
-        </div>
+          <div className="title-text-lockup" aria-hidden="true">
+            <span>三</span>
+            <i />
+            <span>朝</span>
+            <i />
+            <span>书</span>
+          </div>
+          <p className="title-roman">SAN CHAO SHU</p>
+        </section>
 
-        {/* 按钮组 */}
-        <div className="menu-buttons">
-          <button className="menu-btn btn-start" onClick={onStartGame}>
-            开始游戏
+        <nav className="main-menu-actions" aria-label="主菜单">
+          <button
+            className="menu-btn menu-btn-primary"
+            onClick={onStartGame}
+            type="button"
+          >
+            <span className="menu-btn-marker" aria-hidden="true" />
+            <span>开始游戏</span>
           </button>
           <button
-            className={`menu-btn btn-continue${!hasSavedGame ? ' disabled' : ''}`}
+            className={`menu-btn${!hasSavedGame ? ' disabled' : ''}`}
             onClick={onContinueGame}
             disabled={!hasSavedGame}
+            type="button"
           >
-            继续游戏
+            <span>继续游戏</span>
           </button>
-          <button className="menu-btn btn-settings" onClick={handleSettings}>
-            设置
+          <button className="menu-btn" onClick={handleSettings} type="button">
+            <span>设置</span>
           </button>
-          <button className="menu-btn btn-about" onClick={handleAbout}>
-            关于女书
+          <button className="menu-btn" onClick={handleAbout} type="button">
+            <span>关于女书</span>
           </button>
-        </div>
+        </nav>
 
-        {/* 版本号 */}
         <div className="version-tag">v1.0.0</div>
       </div>
 
-      {/* 关于女书弹窗 */}
       <AboutModal visible={showAbout} onClose={() => setShowAbout(false)} />
-
-      {/* 设置弹窗 */}
-      <SettingsModal visible={showSettings} onClose={() => setShowSettings(false)} />
+      <SettingsModal
+        visible={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
     </div>
   )
 }

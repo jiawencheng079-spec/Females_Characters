@@ -13,7 +13,7 @@
 .titlecard-bg {
   position: absolute;
   inset: 0;
-  background: url('/assets/nushu/mainmenubg.png') center/cover no-repeat;
+  background: url('/assets/main-menu/main_menu_bg.png') center/cover no-repeat;
   filter: brightness(0.55);
 }
 

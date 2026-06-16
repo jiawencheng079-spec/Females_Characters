@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useCallback, useState, useRef, useEffect } from 'react'
 import './Chapter1.css'
 import { ProgressStage } from '../../utils/gameSave'
 
@@ -125,11 +125,21 @@ const getQuizWrongFeedback = (question: number, choice: string): string => {
 
 interface Chapter1Props {
   resumeProgress: number
-  onLeave: (progress: number) => void
+  isDictionaryOpen: boolean
+  openDictionary: () => void
+  onLeave: (progress: ProgressStage) => void
+  onProgressChange: (progress: ProgressStage) => void
   onComplete: () => void
 }
 
-function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
+function Chapter1({
+  resumeProgress,
+  isDictionaryOpen,
+  openDictionary,
+  onLeave,
+  onProgressChange,
+  onComplete,
+}: Chapter1Props) {
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const [imgNatural, setImgNatural] = useState({ w: 0, h: 0 })
   const [imgReady, setImgReady] = useState(false)
@@ -138,7 +148,6 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
   const [showLetterPopup, setShowLetterPopup] = useState(false)
   const [showBookPopup, setShowBookPopup] = useState(false)
   const [bookPopupShown, setBookPopupShown] = useState(false)
-  const [showBookSystem, setShowBookSystem] = useState(false)
   const [narrationIndex, setNarrationIndex] = useState(0)
   const [narrationDone, setNarrationDone] = useState(false)
   const [dialogIndex, setDialogIndex] = useState(0)
@@ -166,7 +175,7 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
   const [draggingItem, setDraggingItem] = useState<string | null>(null)
   const [dragOverCat, setDragOverCat] = useState<string | null>(null)
   const [matchCommentary, setMatchCommentary] = useState<string | null>(null) // 当前展示的阿禾补充对话
-  const [matchCategoryDone, setMatchCategoryDone] = useState<Set<string>>(new Set()) // 已触发完成对话的分类
+  const [, setMatchCategoryDone] = useState<Set<string>>(new Set()) // 已触发完成对话的分类
   const [matchCatCommentary, setMatchCatCommentary] = useState<string | null>(null) // 当前展示的分类完成对话
   const [matchAllWrong, setMatchAllWrong] = useState(false) // 全部放置但错误
   const [matchFinalStage, setMatchFinalStage] = useState(0) // Q4: 0=none, 1=阿禾提问, 2=展示图片, 3=选项
@@ -200,6 +209,7 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
   // 键盘监听
   useEffect(() => {
     const onDown = (e: KeyboardEvent) => {
+      if (isDictionaryOpen) return
       const k = e.key.toLowerCase()
       if (['w', 'a', 's', 'd'].includes(k)) {
         e.preventDefault()
@@ -218,7 +228,11 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
       window.removeEventListener('keydown', onDown)
       window.removeEventListener('keyup', onUp)
     }
-  }, [])
+  }, [isDictionaryOpen])
+
+  useEffect(() => {
+    if (isDictionaryOpen) keysRef.current.clear()
+  }, [isDictionaryOpen])
 
   // 窗口 resize
   useEffect(() => {
@@ -231,7 +245,7 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
 
   // 动画帧 — WASD 平移（旁白/对话/弹窗期间暂停）
   useEffect(() => {
-    if (!imgReady || showBoundaryInfo || showLetterPopup || showBookPopup || showBookSystem || isQuizBusy || !narrationDone || (dialogActive && !dialogFinished) || (narration2Active && !narration2Done)) return
+    if (!imgReady || isDictionaryOpen || showBoundaryInfo || showLetterPopup || showBookPopup || isQuizBusy || !narrationDone || (dialogActive && !dialogFinished) || (narration2Active && !narration2Done)) return
 
     let lastTime = performance.now()
     const clamp = (v: number, min: number, max: number) =>
@@ -265,7 +279,7 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
 
     animRef.current = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(animRef.current)
-  }, [imgReady, maxX, maxY, showBoundaryInfo, showLetterPopup, showBookPopup, showBookSystem, isQuizBusy, narrationDone, dialogActive, dialogFinished, narration2Active, narration2Done])
+  }, [imgReady, maxX, maxY, isDictionaryOpen, showBoundaryInfo, showLetterPopup, showBookPopup, isQuizBusy, narrationDone, dialogActive, dialogFinished, narration2Active, narration2Done])
 
   // 图片加载后把初始位置定在画面右下角
   useEffect(() => {
@@ -277,7 +291,7 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
   }, [imgReady, maxX, maxY])
 
   // 计算当前进度（存档用）
-  const getSaveProgress = (): ProgressStage => {
+  const getSaveProgress = useCallback((): ProgressStage => {
     if (matchFinalStage > 0) return ProgressStage.IN_Q4
     if (matchActive) return ProgressStage.IN_MATCH
     if (quizDone) return ProgressStage.MATCH_Q3
@@ -287,7 +301,47 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
     if (dialogFinished) return ProgressStage.NARRATION2
     if (dialogActive || narrationDone) return ProgressStage.DIALOG
     return ProgressStage.NOT_STARTED
-  }
+  }, [
+    dialogActive,
+    dialogFinished,
+    matchActive,
+    matchFinalStage,
+    narration2Active,
+    narration2Done,
+    narrationDone,
+    quizActive,
+    quizDone,
+  ])
+
+  useEffect(() => {
+    onProgressChange(getSaveProgress())
+  }, [getSaveProgress, onProgressChange])
+
+  useEffect(() => {
+    const handleHudKeyDown = (event: KeyboardEvent) => {
+      if (!narration2Done || isDictionaryOpen) return
+
+      if (event.key === 'Tab') {
+        event.preventDefault()
+        openDictionary()
+        return
+      }
+
+      if (event.key === 'Escape' || event.key.toLowerCase() === 'q') {
+        event.preventDefault()
+        onLeave(getSaveProgress())
+      }
+    }
+
+    window.addEventListener('keydown', handleHudKeyDown)
+    return () => window.removeEventListener('keydown', handleHudKeyDown)
+  }, [
+    getSaveProgress,
+    isDictionaryOpen,
+    narration2Done,
+    onLeave,
+    openDictionary,
+  ])
 
   // 恢复存档进度：快进到对应阶段
   useEffect(() => {
@@ -651,6 +705,18 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
     setMatchFinalFeedback(null)
   }
 
+  const clueFoundCount = [
+    bookPopupShown ||
+      letterDropped ||
+      showLetterPopup ||
+      quizActive ||
+      quizDone ||
+      matchActive ||
+      matchFinalStage > 0,
+    matchActive || matchFinalStage > 0 || quizDone,
+    matchFinalStage > 0 || (quizDone && !matchActive),
+  ].filter(Boolean).length
+
   return (
     <div className="chapter1">
       {/* 加载中 */}
@@ -704,28 +770,32 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
         </div>
       )}
 
-      {/* WASD 提示 — 第二段旁白结束后才显示 */}
+      {/* HUD — 第二段旁白结束后进入自由探索才显示 */}
       {narration2Done && (
-        <div className="chapter1-hint">
-          <span>W A S D</span> 移动视角
-        </div>
-      )}
-
-      {/* 三朝书系统按钮 — 展示过三朝书后固定在顶部中央 */}
-      {bookPopupShown && (
-        <button
-          className="chapter1-book-btn"
-          onClick={() => setShowBookSystem(true)}
-        >
-          三朝书
-        </button>
+        <>
+          <button
+            className="chapter1-dictionary-btn"
+            type="button"
+            aria-label="打开词典"
+            onClick={openDictionary}
+          >
+            <img src="/assets/ui/open_book_icon.png" alt="" />
+            <span>词典</span>
+          </button>
+          <div className="chapter1-clue-progress">
+            线索 {clueFoundCount}/3
+          </div>
+          <div className="chapter1-hint">
+            WASD 移动 | E 交互 | Tab 词典 | Q / ESC 返回
+          </div>
+          <div className="chapter1-player-marker" aria-hidden="true" />
+        </>
       )}
 
       {/* Q3 匹配游戏重开按钮 — 关闭匹配游戏后显示 */}
       {quizDone && !matchActive && matchFinalStage === 0 && (
         <button
-          className="chapter1-book-btn"
-          style={{ top: bookPopupShown ? '3.2rem' : '1rem' }}
+          className="chapter1-reopen-btn"
           onClick={reopenMatchGame}
         >
           继续回忆
@@ -735,22 +805,12 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
       {/* Q2 答题重开按钮 — 关闭图片弹窗后显示 */}
       {quizDismissed && !quizDone && !quizActive && (
         <button
-          className="chapter1-book-btn"
-          style={{ top: bookPopupShown ? '3.2rem' : '1rem' }}
+          className="chapter1-reopen-btn"
           onClick={reopenQuiz}
         >
           继续思考
         </button>
       )}
-
-      {/* 离开按钮 — 右上角，保存进度并返回主菜单 */}
-      <button
-        className="chapter1-leave-btn"
-        onClick={() => onLeave(getSaveProgress())}
-        title="保存并离开"
-      >
-        离开
-      </button>
 
       {/* 开场旁白 */}
       {!narrationDone && (
@@ -819,21 +879,6 @@ function Chapter1({ resumeProgress, onLeave, onComplete }: Chapter1Props) {
                 alt="三朝书"
                 className="book-placeholder-img"
               />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 三朝书系统弹窗 */}
-      {showBookSystem && (
-        <div className="book-system-overlay" onClick={() => setShowBookSystem(false)}>
-          <div className="book-system-popup" onClick={(e) => e.stopPropagation()}>
-            <button className="book-system-close" onClick={() => setShowBookSystem(false)}>
-              关闭
-            </button>
-            <div className="book-system-content">
-              <p className="book-system-placeholder">三朝书</p>
-              <p className="book-system-hint">系统开发中，敬请期待</p>
             </div>
           </div>
         </div>

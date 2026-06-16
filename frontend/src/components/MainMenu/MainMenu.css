@@ -1,29 +1,3 @@
-/* ========== 可调整的比例变量 ========== */
-/*
- *  在这里修改参数即可全局生效，刷新页面看效果
- *  所有百分比都是相对于视口的
- */
-.main-menu {
-  /* 标题区位置 */
-  --title-left: 12vw;        /* 标题距左边距离 */
-  --title-top: 10vh;         /* 标题距顶部距离 */
-  --title-w: 22vw;           /* 标题最大宽度 */
-  --title-h: 28vh;           /* 标题最大高度 */
-
-  /* 标题到按钮间距 */
-  --title-btn-gap: 3vh;
-
-  /* 按钮区位置（相对于标题左边） */
-  --btn-offset-left: 0vw;    /* 按钮额外左偏移 */
-  --btn-width: 18vw;         /* 按钮最小宽度 */
-  --btn-h-padding: 2.5vw;    /* 按钮横向内边距 */
-  --btn-v-padding: 1.8vh;    /* 按钮纵向内边距 */
-  --btn-font: 1.6vw;         /* 按钮字号 */
-  --btn-gap: 1.2vh;          /* 按钮间距 */
-  --btn-letter-spacing: 0.3em;
-}
-
-/* ========== 主菜单容器 ========== */
 .main-menu {
   position: fixed;
   inset: 0;
@@ -31,151 +5,297 @@
   height: 100vh;
   overflow: hidden;
   font-family: 'STKaiti', 'KaiTi', 'SimSun', serif;
+  color: #2f241f;
 }
 
-/* ========== 背景层 ========== */
 .main-menu-bg {
   position: absolute;
   inset: 0;
-  background-image: url('/assets/nushu/main_menu_bg.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-color: #e8dcc4; /* 兜底色 */
   z-index: 0;
+  background-color: #e8dcc4;
+  background-image:
+    linear-gradient(
+      90deg,
+      rgba(248, 230, 200, 0.1) 0%,
+      rgba(248, 230, 200, 0.24) 42%,
+      rgba(248, 230, 200, 0.1) 100%
+    ),
+    url('/assets/main-menu/main_menu_bg.png');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
 }
 
-/* ========== 内容层 ========== */
 .main-menu-content {
   position: relative;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  width: 100%;
+  display: grid;
+  width: min(1180px, 78vw);
   height: 100%;
-  padding-top: var(--title-top);
-  padding-left: var(--title-left);
+  margin: 0 auto;
+  grid-template-columns: minmax(340px, 1.08fr) minmax(280px, 0.92fr);
+  align-items: center;
+  gap: clamp(44px, 7vw, 120px);
 }
 
-/* ========== 标题区域 ========== */
-.title-area {
-  margin-bottom: var(--title-btn-gap);
+.main-menu-title {
   display: flex;
-  justify-content: flex-start;
+  flex-direction: column;
+  align-items: center;
+  justify-self: center;
+  transform: translate(-4vw, -14vh);
 }
 
 .title-logo {
-  max-width: var(--title-w);
-  max-height: var(--title-h);
-  width: auto;
-  height: auto;
+  width: min(33vw, 429px);
+  max-height: 33vh;
   object-fit: contain;
-  filter: drop-shadow(0 2px 12px rgba(80, 50, 20, 0.15));
+  filter: drop-shadow(0 3px 12px rgba(49, 32, 24, 0.18));
 }
 
-/* ========== 按钮组 ========== */
-.menu-buttons {
+.title-text-lockup {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 1.5vw, 22px);
+  margin-top: clamp(12px, 2vh, 22px);
+  color: #2f241f;
+  font-size: clamp(28px, 2.8vw, 43px);
+  line-height: 1;
+}
+
+.title-text-lockup i {
+  width: 1px;
+  height: 1em;
+  background: rgba(47, 36, 31, 0.58);
+}
+
+.title-roman {
+  margin: clamp(11px, 1.3vh, 16px) 0 0;
+  color: #2f241f;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(14px, 1.38vw, 22px);
+  letter-spacing: 0.47em;
+  text-indent: 0.47em;
+}
+
+.main-menu-actions {
+  display: flex;
+  width: min(396px, 29.2vw);
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--btn-gap);
-  margin-left: var(--btn-offset-left);
+  justify-self: start;
+  gap: clamp(18px, 2.7vh, 33px);
+  transform: translateY(-15vh);
 }
 
-/* 按钮基础样式 */
 .menu-btn {
-  min-width: var(--btn-width);
-  padding: var(--btn-v-padding) var(--btn-h-padding);
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: var(--btn-font);
-  color: #8b4530;
-  letter-spacing: var(--btn-letter-spacing);
-  transition: all 0.25s ease;
   position: relative;
-  background-color: transparent;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 280 56'%3E%3Cpath d='M28 4 L252 4 Q260 4 264 10 Q268 16 268 24 Q268 32 262 38 L256 44 Q250 52 238 52 L42 52 Q30 52 24 44 L18 38 Q12 32 12 24 Q12 16 16 10 Q20 4 28 4 Z' fill='none' stroke='%23a85c42' stroke-width='1.2'/%3E%3Cpath d='M18 14 Q22 8 30 6 M262 14 Q258 8 250 6 M16 34 Q12 40 18 46 M264 34 Q268 40 262 46' fill='none' stroke='%23c97a5e' stroke-width='0.8'/%3E%3Ccircle cx='14' cy='24' r='3' fill='%23c97a5e'/%3E%3Ccircle cx='266' cy='24' r='3' fill='%23c97a5e'/%3E%3C/svg%3E");
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
+  min-height: clamp(48px, 6.7vh, 68px);
+  padding: 0 33px;
+  border: 0;
+  color: #4c2f28;
+  background: transparent;
+  font-family: inherit;
+  font-size: clamp(21px, 1.82vw, 31px);
+  letter-spacing: 0.27em;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    color 180ms ease,
+    filter 180ms ease,
+    transform 180ms ease;
 }
 
-/* ========== 各按钮独立微调 ========== */
-.btn-start    { /* margin / padding / font-size 覆盖 */ }
-.btn-continue { /* 例: margin-left: 1vw; */ }
-.btn-settings { /* 例: margin-left: 1vw; */ }
-.btn-about    { /* 例: margin-left: 1vw; */ }
+.menu-btn::before,
+.menu-btn::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.menu-btn::before {
+  inset: 9px 22px;
+  border-top: 1px solid rgba(172, 83, 73, 0.46);
+  border-bottom: 1px solid rgba(172, 83, 73, 0.46);
+}
+
+.menu-btn::after {
+  left: 50%;
+  bottom: -11px;
+  width: 72%;
+  height: 1px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(172, 83, 73, 0.42) 42%,
+      rgba(172, 83, 73, 0.42) 58%,
+      transparent
+    );
+  transform: translateX(-50%);
+}
+
+.menu-btn span:last-child {
+  position: relative;
+  z-index: 1;
+}
+
+.menu-btn-primary {
+  color: #33221e;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(249, 237, 211, 0.16),
+      rgba(249, 237, 211, 0.55),
+      rgba(249, 237, 211, 0.16)
+    );
+}
+
+.menu-btn-primary::before {
+  inset: 1px 0;
+  border: 1px solid rgba(172, 83, 73, 0.72);
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 245, 219, 0.18),
+      rgba(255, 245, 219, 0.52),
+      rgba(255, 245, 219, 0.18)
+    );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 244, 218, 0.35),
+    0 4px 16px rgba(94, 48, 37, 0.08);
+}
+
+.menu-btn-marker {
+  position: absolute;
+  top: 50%;
+  left: -34px;
+  width: 9px;
+  height: 9px;
+  background: #a83335;
+  box-shadow:
+    -12px 0 0 -3px #a83335,
+    0 -12px 0 -4px rgba(168, 51, 53, 0.88);
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.menu-btn:hover:not(:disabled),
+.menu-btn:focus-visible:not(:disabled) {
+  color: #7b2e28;
+  filter: brightness(1.08);
+  outline: none;
+  transform: translateX(4px);
+}
+
+.menu-btn-primary:hover:not(:disabled),
+.menu-btn-primary:focus-visible:not(:disabled) {
+  transform: translateX(6px);
+}
+
+.menu-btn:active:not(:disabled) {
+  transform: translateX(2px) scale(0.98);
+}
 
 .menu-btn.disabled,
 .menu-btn:disabled {
-  opacity: 0.35;
+  opacity: 0.38;
   cursor: not-allowed;
   filter: grayscale(0.6);
-  pointer-events: none;
-}
-.menu-btn:disabled:hover {
-  transform: none;
-  filter: grayscale(0.6);
 }
 
-/* ========== hover / active ========== */
-.menu-btn:hover {
-  transform: scale(1.05);
-  filter: brightness(1.08);
-}
-
-.menu-btn:active {
-  transform: scale(0.98);
-}
-
-/* ========== 版本号 ========== */
 .version-tag {
   position: absolute;
-  bottom: 1.5rem;
-  left: 2rem;
-  color: #9a8876;
+  right: clamp(22px, 3vw, 42px);
+  bottom: clamp(16px, 2.4vh, 30px);
+  color: rgba(78, 58, 48, 0.58);
+  font-family: Georgia, 'Times New Roman', serif;
   font-size: 0.85rem;
-  letter-spacing: 0.1em;
-  opacity: 0.7;
+  letter-spacing: 0.18em;
 }
 
-/* ========== 响应式适配 ========== */
-@media (max-height: 700px) {
-  .main-menu {
-    --title-top: 6vh;
-    --title-w: 18vw;
-    --title-h: 22vh;
-    --title-btn-gap: 2vh;
-    --btn-width: 16vw;
-    --btn-font: 1.4vw;
-    --btn-gap: 0.8vh;
-    --btn-h-padding: 2vw;
-    --btn-v-padding: 1.4vh;
+@media (max-width: 980px) {
+  .main-menu-content {
+    width: min(720px, 86vw);
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    align-content: center;
+    gap: clamp(28px, 5vh, 46px);
+  }
+
+  .main-menu-title,
+  .main-menu-actions {
+    justify-self: center;
+    transform: none;
+  }
+
+  .title-logo {
+    width: min(46vw, 330px);
+    max-height: 24vh;
+  }
+
+  .main-menu-actions {
+    width: min(380px, 74vw);
   }
 }
 
-@media (max-width: 768px) {
-  .main-menu {
-    --title-left: 6vw;
-    --title-top: 6vh;
-    --title-w: 28vw;
-    --title-h: 22vh;
-    --btn-width: 26vw;
-    --btn-font: 2.2vw;
+@media (max-width: 560px) {
+  .main-menu-content {
+    width: 90vw;
+    gap: 28px;
+  }
+
+  .title-logo {
+    width: min(62vw, 280px);
+  }
+
+  .title-text-lockup {
+    font-size: clamp(22px, 7vw, 31px);
+  }
+
+  .title-roman {
+    font-size: 12px;
+    letter-spacing: 0.34em;
+    text-indent: 0.34em;
+  }
+
+  .main-menu-actions {
+    width: min(330px, 82vw);
+    gap: 14px;
+  }
+
+  .menu-btn {
+    min-height: 46px;
+    padding: 0 22px;
+    font-size: 18px;
+  }
+
+  .menu-btn-marker {
+    left: -20px;
   }
 }
 
-@media (max-width: 480px) {
-  .main-menu {
-    --title-left: 4vw;
-    --title-top: 4vh;
-    --title-w: 36vw;
-    --title-h: 20vh;
-    --title-btn-gap: 2vh;
-    --btn-width: 38vw;
-    --btn-font: 3.2vw;
-    --btn-gap: 1vh;
+@media (max-height: 620px) and (min-width: 981px) {
+  .main-menu-title,
+  .main-menu-actions {
+    transform: translateY(-1vh);
+  }
+
+  .title-logo {
+    width: min(24vw, 310px);
+    max-height: 25vh;
+  }
+
+  .main-menu-actions {
+    gap: 13px;
+  }
+
+  .menu-btn {
+    min-height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-btn {
+    transition-duration: 0.01ms;
   }
 }

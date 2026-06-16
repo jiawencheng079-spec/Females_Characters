@@ -1,21 +1,24 @@
 /** 游戏进度阶段（数字越大进度越后） */
-export const enum ProgressStage {
-  NOT_STARTED = 0,
+export const ProgressStage = {
+  NOT_STARTED: 0,
   /** 开场旁白结束，即将进入对话 */
-  DIALOG = 1,
+  DIALOG: 1,
   /** 阿禾对话结束，即将进入旁白2 */
-  NARRATION2 = 2,
+  NARRATION2: 2,
   /** 旁白2结束，即将进入 Quiz */
-  QUIZ = 3,
+  QUIZ: 3,
   /** Q1~Q2 完成，即将进入 Q3 匹配游戏 */
-  MATCH_Q3 = 4,
+  MATCH_Q3: 4,
   /** 正在 Q3 匹配游戏中 */
-  IN_MATCH = 5,
+  IN_MATCH: 5,
   /** 正在 Q4 最终问答中 */
-  IN_Q4 = 6,
+  IN_Q4: 6,
   /** 全部完成 */
-  DONE = 7,
-}
+  DONE: 7,
+} as const
+
+export type ProgressStage =
+  (typeof ProgressStage)[keyof typeof ProgressStage]
 
 export interface GameSave {
   phase: string // 'chapter1' 等
