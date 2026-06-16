@@ -315,12 +315,28 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
-  width: min(780px, 92vw);
-  background: url('/assets/FirstLevel/conversation.png') center/100% 100% no-repeat;
+  width: min(820px, 94vw);
+  min-height: 160px;
+  background: transparent;
   border: none;
-  border-radius: 6px;
-  padding: 1.6rem 2rem 1.8rem;
-  box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.3);
+  border-radius: 0;
+  padding: 3rem 4rem 3rem;
+}
+
+.dialog-box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('/assets/FirstLevel/conversation.png') center/100% 100% no-repeat;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.dialog-name-row,
+.dialog-text,
+.dialog-next-icon {
+  position: relative;
+  z-index: 1;
 }
 
 .dialog-name-row {
