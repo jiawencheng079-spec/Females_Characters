@@ -176,9 +176,9 @@ export const EMBROIDERY_INTERACTIONS: EmbroideryInteraction[] = [
       {
         display: 'dialogue',
         text: [
-          '绣娘：出门那日，镜匣要合上，木梳也要收好。',
-          '绣娘：这一身{{nushu}}，不是只为好看。',
-          '绣娘：它提醒人，今日之后，她要去很远的地方。',
+          '出门那日，镜匣要合上，木梳也要收好。',
+          '这一身{{nushu}}，不是只为好看。',
+          '它提醒人，今日之后，她要去很远的地方。',
         ].join('\n'),
         nushuTextureKeys: [
           'embroidery_nushu_hong',
@@ -206,9 +206,9 @@ export const EMBROIDERY_INTERACTIONS: EmbroideryInteraction[] = [
       {
         display: 'dialogue',
         text: [
-          '绣娘：送人的帕，不能只绣花。',
-          '绣娘：帕角要留她的{{nushu}}。',
-          '绣娘：这样多年以后，也还记得是谁送的。',
+          '送人的帕，不能只绣花。',
+          '帕角要留她的{{nushu}}。',
+          '这样多年以后，也还记得是谁送的。',
         ].join('\n'),
         nushuTextureKeys: ['embroidery_nushu_ming'],
       },
@@ -233,9 +233,9 @@ export const EMBROIDERY_INTERACTIONS: EmbroideryInteraction[] = [
       {
         display: 'dialogue',
         text: [
-          '绣娘：白日人多，有些话不好写。',
-          '绣娘：到了夜里，只剩这一盏{{nushu}}。',
-          '绣娘：她们就在灯前绣，也在灯前读。',
+          '白日人多，有些话不好写。',
+          '到了夜里，只剩这一盏{{nushu}}。',
+          '她们就在灯前绣，也在灯前读。',
         ].join('\n'),
         nushuTextureKeys: ['embroidery_nushu_deng'],
       },
@@ -260,8 +260,8 @@ export const EMBROIDERY_INTERACTIONS: EmbroideryInteraction[] = [
       {
         display: 'dialogue',
         text: [
-          '绣娘：这方帕，不能拖到明日了。',
-          '绣娘：我{{nushu}}日就要把它绣完。',
+          '这方帕，不能拖到明日了。',
+          '我{{nushu}}日就要把它绣完。',
         ].join('\n'),
         nushuTextureKeys: ['embroidery_nushu_jin'],
       },
@@ -271,8 +271,7 @@ export const EMBROIDERY_INTERACTIONS: EmbroideryInteraction[] = [
         text: [
           '女书不仅写在纸本和扇面上，也会写在布帕上，称为“帕书”。',
           '有些字还会被一针一线绣在帕子上，成为“绣字”。',
-          '帕子可以被随身携带，也可以作为赠物留下。',
-          '因此，绣帕不只是装饰物，也是女性之间传递话语、保存记忆的载体。',
+          '那些绣下来的字，像是藏在布里的话，被人带走，也被人记住。',
         ].join('\n'),
       },
     ],
@@ -302,9 +301,9 @@ export const EMBROIDERY_INTERACTIONS: EmbroideryInteraction[] = [
       {
         display: 'dialogue',
         text: [
-          '绣娘：从前学字，不一定是在书桌前。',
-          '绣娘：手里做着针线，耳边听着别人读。',
-          '绣娘：一边绣，一边念，一边记，这就叫{{nushu}}。',
+          '从前学字，不一定是在书桌前。',
+          '手里做着针线，耳边听着别人读。',
+          '一边绣，一边念，一边记，这就叫{{nushu}}。',
         ].join('\n'),
         nushuTextureKeys: [
           'embroidery_nushu_nv',
@@ -315,9 +314,9 @@ export const EMBROIDERY_INTERACTIONS: EmbroideryInteraction[] = [
         display: 'culture',
         title: '一边女红，一边读字',
         text: [
-          '在江永女书文化中，女性常聚在一起做女红，也会读纸、读扇、读帕。',
-          '年长女性在缝补、绣花、整理针线时，把字、歌和故事教给年轻女孩。',
-          '女红篮因此不只是生活工具，也象征女书在女性日常劳动中的传习方式。',
+          '女红篮里放着针线、布料，也放着日常里的许多声音。',
+          '从前女性常一边做针线，一边听人读字、唱歌、讲故事。',
+          '字不是只在书桌前学会的，也是在一针一线之间慢慢记下来的。',
         ].join('\n'),
       },
     ],
@@ -336,9 +335,9 @@ export const EMBROIDERY_INTERACTIONS: EmbroideryInteraction[] = [
         display: 'culture',
         title: '红妆与离家',
         text: [
-          '木梳和镜匣属于婚嫁生活中的私人物件。',
-          '它们提示这里不是普通的书写空间，而是与出嫁、梳妆、离别有关的女红空间。',
-          '三朝书、绣帕和赠物，都与“把话留给某个人、让某个人带走”有关。',
+          '木梳和镜匣常放在妆奁里，也会在出嫁时被收进行囊。',
+          '它们不一定写有女书，却和纸页、绣帕一样，是可以被带走的东西。',
+          '人离开家时，有些话说不出口，便托给这些贴身之物留下。',
         ].join('\n'),
       },
     ],

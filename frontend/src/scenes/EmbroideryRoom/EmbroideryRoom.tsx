@@ -397,6 +397,15 @@ function EmbroideryRoom({ openDictionary }: EmbroideryRoomProps) {
             >
               ×
             </button>
+            <img
+              className="dialogue-npc-portrait"
+              src={npcConfig.dialogueImage}
+              alt=""
+              draggable="false"
+              onError={(event) => {
+                event.currentTarget.src = npcConfig.image
+              }}
+            />
             <div className="dialogue-copy">
               <div className="dialogue-name" id="dialogue-title">
                 {npcConfig.name}

@@ -436,9 +436,22 @@
   animation: dialogue-in 230ms ease both;
 }
 
+.dialogue-npc-portrait {
+  position: absolute;
+  left: 3%;
+  bottom: 18%;
+  width: min(18%, 220px);
+  height: 118%;
+  object-fit: contain;
+  object-position: bottom center;
+  filter: drop-shadow(0 12px 18px rgba(14, 10, 9, 0.28));
+  pointer-events: none;
+  user-select: none;
+}
+
 .dialogue-copy {
   position: absolute;
-  left: 7.5%;
+  left: 21%;
   right: 7.5%;
   top: 25%;
   bottom: 16%;

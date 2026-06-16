@@ -79,6 +79,7 @@ export type NpcConfig = {
   id: string
   name: string
   image: string
+  dialogueImage: string
   imagePosition: PercentRect
   hotspotPosition: PercentRect
   ariaLabel: string
@@ -227,6 +228,7 @@ export const npcConfig: NpcConfig = {
   id: 'embroiderer',
   name: '绣娘',
   image: '/assets/embroidery-room/npc/xiuniang.png',
+  dialogueImage: '/assets/embroidery-room/npc/xiuniang-dialogue.png',
   imagePosition: {
     left: '51.5%',
     bottom: '2%',

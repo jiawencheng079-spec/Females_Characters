@@ -34,6 +34,21 @@ type SingingDictionaryPuzzleConfig = {
   localEntryIds: readonly string[]
 }
 
+const TOAST_GLYPH_HEIGHT = 46;
+const TOAST_GLYPH_GAP = 6;
+const TOAST_PADDING_X = 20;
+const TOAST_HEIGHT = 66;
+
+const GLOBAL_PUZZLE_NUSHU_TEXTURE_KEYS: Record<string, readonly string[]> = {
+  geshan: ['singing_nushu_ge', 'singing_nushu_shan'],
+  zhi: ['singing_nushu_zhi'],
+  yuanxing: ['singing_nushu_yuan', 'singing_nushu_xing'],
+};
+
+const LOCAL_ENTRY_NUSHU_TEXTURE_KEYS: Record<string, readonly string[]> = {
+  song_sheng: ['singing_nushu_sheng'],
+};
+
 const GLOBAL_DICTIONARY_PUZZLES: Record<
   string,
   SingingDictionaryPuzzleConfig
@@ -65,6 +80,8 @@ export class MainScene extends Phaser.Scene {
   private dictionaryBridge!: GlobalDictionaryBridge;
   private isGlobalDictionaryOpen = false;
   private pendingDictionaryPuzzle: SingingDictionaryPuzzleConfig | null = null;
+  private pendingGlyphToastTargets = new Set<string>();
+  private pendingLocalGlyphToastEntryIds = new Set<string>();
 
   // ========== 游戏对象 ==========
   private player!: Phaser.Physics.Arcade.Sprite;
@@ -969,7 +986,9 @@ export class MainScene extends Phaser.Scene {
       const dictionaryPuzzle = GLOBAL_DICTIONARY_PUZZLES[target];
       if (dictionaryPuzzle) {
         this.pendingDictionaryPuzzle = dictionaryPuzzle;
-        this.showToast('发现新的女书线索，按 Tab 打开三朝书词典');
+        this.pendingGlyphToastTargets.add(target);
+      } else if (target === 'npc_sisters') {
+        this.pendingLocalGlyphToastEntryIds.add('song_sheng');
       }
     }
 
@@ -1316,7 +1335,7 @@ export class MainScene extends Phaser.Scene {
       } else if (this.sistersScenePhase3 && (event.key === 'e' || event.key === 'E')) {
         this.enterSistersPhase4();
       } else if (event.key === 'e' || event.key === 'E') {
-        this.closeSistersScene();
+        this.closeSistersScene(true);
       }
     };
     this.input.keyboard?.on('keydown', keyHandler);
@@ -1330,6 +1349,8 @@ export class MainScene extends Phaser.Scene {
         this.enterSistersPhase3();
       } else if (this.sistersScenePhase3) {
         this.enterSistersPhase4();
+      } else {
+        this.closeSistersScene(true);
       }
     };
     this.input.on('pointerdown', clickHandler);
@@ -1338,7 +1359,6 @@ export class MainScene extends Phaser.Scene {
     this._sistersClickHandler = clickHandler;
 
     // 解锁"声"词条
-    this.unlockSistersEntry();
   }
 
   /** Phase 2：只显示标题"唱扇女。"，提示继续按E */
@@ -1425,7 +1445,7 @@ export class MainScene extends Phaser.Scene {
   }
 
   /** 关闭姐妹场景 */
-  private closeSistersScene(): void {
+  private closeSistersScene(completed = false): void {
     this.sistersSceneOpen = false;
 
     // 移除监听器
@@ -1450,6 +1470,19 @@ export class MainScene extends Phaser.Scene {
       this.player.setPosition(this.savedPlayerPos.x, this.savedPlayerPos.y);
     }
     this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+
+    if (completed) {
+      const shouldShowQueuedToast =
+        this.pendingLocalGlyphToastEntryIds.has('song_sheng');
+      const unlockedNow = this.unlockSistersEntry();
+
+      if (shouldShowQueuedToast) {
+        this.showPendingLocalGlyphToast('song_sheng');
+      } else if (unlockedNow) {
+        const textureKeys = LOCAL_ENTRY_NUSHU_TEXTURE_KEYS.song_sheng;
+        if (textureKeys?.length) this.showNewGlyphToast(textureKeys);
+      }
+    }
   }
 
   // ==================== 传唱纸片大图预览（三阶段）====================
@@ -1499,7 +1532,7 @@ export class MainScene extends Phaser.Scene {
       } else if (this.paperPreviewPhase2 && (e.key === 'e' || e.key === 'E')) {
         this.enterPaperPhase3();
       } else if (!this.paperPreviewPhase1 && !this.paperPreviewPhase2 && (e.key === 'e' || e.key === 'E')) {
-        this.closePaperPreview();
+        this.closePaperPreview(true);
       }
     };
     window.addEventListener('keydown', keyHandler);
@@ -1579,10 +1612,16 @@ export class MainScene extends Phaser.Scene {
       fontSize: '22px', color: '#a89984', fontFamily: 'serif',
       backgroundColor: '#00000088', padding: { x: 20, y: 8 },
     }).setOrigin(0.5).setDepth(100).setScrollFactor(0).setName('paper_close_hint');
+
+    const overlay = this.children.getByName('paper_overlay') as Phaser.GameObjects.Rectangle;
+    if (overlay) {
+      overlay.removeAllListeners('pointerdown');
+      overlay.on('pointerdown', () => this.closePaperPreview(true));
+    }
   }
 
   /** 关闭纸片大图预览 */
-  private closePaperPreview(): void {
+  private closePaperPreview(completed = false): void {
     if (!this.paperPreviewOpen) return;
     this.paperPreviewOpen = false;
 
@@ -1599,6 +1638,7 @@ export class MainScene extends Phaser.Scene {
     });
 
     this.scene.resume();
+    if (completed) this.showPendingNewGlyphToast('clue_paper');
   }
 
   // ==================== 唱扇女展开页大图预览 ====================
@@ -1648,7 +1688,7 @@ export class MainScene extends Phaser.Scene {
       } else if (this.fanPreviewPhase2 && (e.key === 'e' || e.key === 'E')) {
         this.enterFanPhase3();
       } else if (!this.fanPreviewPhase1 && !this.fanPreviewPhase2 && (e.key === 'e' || e.key === 'E')) {
-        this.closeFanPreview();
+        this.closeFanPreview(true);
       }
     };
     window.addEventListener('keydown', keyHandler);
@@ -1727,10 +1767,16 @@ export class MainScene extends Phaser.Scene {
       fontSize: '22px', color: '#a89984', fontFamily: 'serif',
       backgroundColor: '#00000088', padding: { x: 20, y: 8 },
     }).setOrigin(0.5).setDepth(100).setScrollFactor(0).setName('fan_close_hint');
+
+    const overlay = this.children.getByName('fan_overlay') as Phaser.GameObjects.Rectangle;
+    if (overlay) {
+      overlay.removeAllListeners('pointerdown');
+      overlay.on('pointerdown', () => this.closeFanPreview(true));
+    }
   }
 
   /** 关闭唱扇女大图预览 */
-  private closeFanPreview(): void {
+  private closeFanPreview(completed = false): void {
     if (!this.fanPreviewOpen) return;
     this.fanPreviewOpen = false;
 
@@ -1747,6 +1793,7 @@ export class MainScene extends Phaser.Scene {
     });
 
     this.scene.resume();
+    if (completed) this.showPendingNewGlyphToast('clue_fan');
   }
 
   // ==================== 琵琶大图预览（三阶段）====================
@@ -2044,7 +2091,7 @@ export class MainScene extends Phaser.Scene {
 
     if (this.girlTextLine >= this.girlLines.length) {
       // 全部行已显示，按 E 关闭
-      this.closeGirlPreview();
+      this.closeGirlPreview(true);
       return;
     }
 
@@ -2064,7 +2111,7 @@ export class MainScene extends Phaser.Scene {
         const overlay = this.children.getByName('girl_overlay') as Phaser.GameObjects.Rectangle;
         if (overlay) {
           overlay.removeAllListeners('pointerdown');
-          overlay.on('pointerdown', () => this.closeGirlPreview());
+          overlay.on('pointerdown', () => this.closeGirlPreview(true));
         }
       }
     } else {
@@ -2078,7 +2125,7 @@ export class MainScene extends Phaser.Scene {
   }
 
   /** 关闭唱扇女NPC场景图预览 */
-  private closeGirlPreview(): void {
+  private closeGirlPreview(completed = false): void {
     if (!this.girlPreviewOpen) return;
     this.girlPreviewOpen = false;
 
@@ -2099,6 +2146,7 @@ export class MainScene extends Phaser.Scene {
     });
 
     this.scene.resume();
+    if (completed) this.showPendingNewGlyphToast('npc_girl');
   }
 
   /** 打开笔墨大图预览（Phase 1：只显示大图） */
@@ -2203,12 +2251,13 @@ export class MainScene extends Phaser.Scene {
   }
 
   /** 解锁"声"词条 */
-  private unlockSistersEntry(): void {
+  private unlockSistersEntry(): boolean {
     const entry = SONG_ENTRIES.find((e) => e.id === 'song_sheng');
     if (entry && !this.saveSystem.getEntry('song_sheng')?.unlocked) {
       this.dictSystem.unlock({ ...entry });
-      this.showToast('🔔 你听到了"声"这个字，词典已更新');
+      return true;
     }
+    return false;
   }
 
   // ==================== 完成检测 ====================
@@ -2328,6 +2377,110 @@ export class MainScene extends Phaser.Scene {
   }
 
   // ==================== Toast ====================
+
+  private showPendingNewGlyphToast(target: string): void {
+    if (!this.pendingGlyphToastTargets.delete(target)) return;
+
+    const puzzle = GLOBAL_DICTIONARY_PUZZLES[target];
+    const textureKeys = puzzle
+      ? GLOBAL_PUZZLE_NUSHU_TEXTURE_KEYS[puzzle.activeEntryId]
+      : undefined;
+    if (textureKeys?.length) this.showNewGlyphToast(textureKeys);
+  }
+
+  private showPendingLocalGlyphToast(entryId: string): void {
+    if (!this.pendingLocalGlyphToastEntryIds.delete(entryId)) return;
+
+    const textureKeys = LOCAL_ENTRY_NUSHU_TEXTURE_KEYS[entryId];
+    if (textureKeys?.length) this.showNewGlyphToast(textureKeys);
+  }
+
+  private showNewGlyphToast(nushuTextureKeys: readonly string[]): void {
+    const content = this.add.container(0, 0);
+    const prefixText = this.createToastText('获得新字形：');
+    content.add(prefixText);
+
+    const glyphWidth = this.addToastGlyphsToContainer(
+      content,
+      nushuTextureKeys,
+      prefixText.width + 8,
+      0,
+    );
+    const suffixText = this.createToastText(
+      '已加入词典',
+      prefixText.width + glyphWidth + 22,
+    );
+    content.add(suffixText);
+
+    const contentWidth = suffixText.x + suffixText.width;
+    content.setPosition(-contentWidth / 2, 0);
+
+    const background = this.add.rectangle(
+      0,
+      0,
+      contentWidth + TOAST_PADDING_X * 2,
+      TOAST_HEIGHT,
+      0x5d2722,
+      0.94,
+    );
+    background.setStrokeStyle(1, 0xd2b47b, 0.75);
+
+    const toast = this.add.container(VIEW_WIDTH / 2, 100, [
+      background,
+      content,
+    ]);
+    toast.setDepth(150).setScrollFactor(0);
+
+    this.tweens.add({
+      targets: toast,
+      alpha: 0,
+      y: 76,
+      duration: 2000,
+      delay: 1000,
+      onComplete: () => toast.destroy(),
+    });
+  }
+
+  private createToastText(
+    text: string,
+    x = 0,
+  ): Phaser.GameObjects.Text {
+    return this.add
+      .text(x, 0, text, {
+        fontSize: '26px',
+        color: '#f7e8ca',
+        fontFamily: '"SimSun", "Microsoft YaHei", serif',
+      })
+      .setOrigin(0, 0.5);
+  }
+
+  private addToastGlyphsToContainer(
+    container: Phaser.GameObjects.Container,
+    sourceTextureKeys: readonly string[],
+    x: number,
+    centerY: number,
+  ): number {
+    let glyphX = 0;
+    sourceTextureKeys.forEach((textureKey) => {
+      const glyph = this.add.image(x + glyphX, centerY, textureKey);
+      const sourceImage = this.textures.get(textureKey).source[0]?.image;
+      const sourceWidth =
+        sourceImage && 'width' in sourceImage ? Number(sourceImage.width) : 52;
+      const sourceHeight =
+        sourceImage && 'height' in sourceImage
+          ? Number(sourceImage.height)
+          : 82;
+      const glyphWidth = TOAST_GLYPH_HEIGHT * (sourceWidth / sourceHeight);
+
+      glyph
+        .setDisplaySize(glyphWidth, TOAST_GLYPH_HEIGHT)
+        .setOrigin(0, 0.5);
+      container.add(glyph);
+      glyphX += glyphWidth + TOAST_GLYPH_GAP;
+    });
+
+    return Math.max(glyphX - TOAST_GLYPH_GAP, 1);
+  }
 
   private showToast(text: string): void {
     const toast = this.add.text(VIEW_WIDTH / 2, 160, text, {

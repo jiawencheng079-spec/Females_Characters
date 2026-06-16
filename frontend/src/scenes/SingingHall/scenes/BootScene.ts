@@ -28,6 +28,16 @@ const nvshuGirlTextUrl = assetUrl('nvshu_girl_text.png');
 const bimoBigUrl = assetUrl('bimo_big.png');
 const paperTextUrl = assetUrl('paper_text.png');
 const openBookIconUrl = '/assets/ui/open_book_icon.png';
+const nushuAssetUrl = (fileName: string): string =>
+  `/assets/nushu/${fileName}.png`;
+const singingNushuAssets = [
+  ['singing_nushu_ge', nushuAssetUrl('ge')],
+  ['singing_nushu_shan', nushuAssetUrl('shan')],
+  ['singing_nushu_zhi', nushuAssetUrl('zhi')],
+  ['singing_nushu_yuan', nushuAssetUrl('yuan')],
+  ['singing_nushu_xing', nushuAssetUrl('xing')],
+  ['singing_nushu_sheng', nushuAssetUrl('sheng')],
+] as const;
 
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -120,6 +130,10 @@ export class BootScene extends Phaser.Scene {
 
     // 传唱纸片上方文字图片（纸）
     this.load.image('paper_text_img', paperTextUrl);
+
+    singingNushuAssets.forEach(([key, url]) => {
+      this.load.image(key, url);
+    });
 
     // ========== 用图形生成简单贴图（不需要外部资源） ==========
     // 玩家 - 蓝色圆形
