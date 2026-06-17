@@ -20,6 +20,8 @@ export const EMBROIDERY_ROOM_SCENE_KEY = 'EmbroideryRoomScene'
 
 const BACKGROUND_KEY = 'embroidery_background'
 const BACKGROUND_PATH = '/assets/scenes/embroidery-room/background.png'
+const BGM_KEY = 'embroidery_bgm'
+const BGM_PATH = '/audio/bgm.mp3'
 const DIALOGUE_BOX_KEY = 'embroidery_dialogue_box'
 const DIALOGUE_BOX_PATH = '/assets/ui/dialogue-box.png'
 const DIALOGUE_NPC_KEY = 'embroidery_dialogue_npc'
@@ -165,6 +167,7 @@ export class EmbroideryRoomPhaserScene extends Phaser.Scene {
 
   preload(): void {
     this.load.image(BACKGROUND_KEY, BACKGROUND_PATH)
+    this.load.audio(BGM_KEY, BGM_PATH)
     this.load.image(DIALOGUE_BOX_KEY, DIALOGUE_BOX_PATH)
     this.load.image(DIALOGUE_NPC_KEY, npcConfig.dialogueImage)
 
@@ -179,6 +182,11 @@ export class EmbroideryRoomPhaserScene extends Phaser.Scene {
 
   create(): void {
     this.introDialogueState = 'pending'
+
+    // 移除旧 BGM 避免场景重启时无法播放
+    const existingBgm = this.sound.get(BGM_KEY)
+    if (existingBgm) existingBgm.destroy()
+    this.sound.add(BGM_KEY, { loop: true, volume: 0.4 }).play()
 
     this.createCombinedNushuTexture('embroidery_nushu_hongzhuang', [
       'embroidery_nushu_hong',
@@ -1763,6 +1771,7 @@ export class EmbroideryRoomPhaserScene extends Phaser.Scene {
 
   private shutdown(): void {
     this.scale.off(Phaser.Scale.Events.RESIZE, this.handleResize, this)
+    this.sound.stopAll()
     this.restoreNpcAfterDialogue()
   }
 }
