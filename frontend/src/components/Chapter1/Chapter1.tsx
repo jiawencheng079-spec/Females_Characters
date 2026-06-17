@@ -2,7 +2,7 @@ import { useCallback, useState, useRef, useEffect } from 'react'
 import './Chapter1.css'
 import { ProgressStage } from '../../utils/gameSave'
 
-const MOVE_SPEED = 500 // 像素/秒
+const MOVE_SPEED = 400 // 像素/秒，与 Phaser 场景对齐
 
 /** 场景缩放因子 — 图片会放大到视口的 N 倍，越大探索空间越多 */
 const SCENE_SCALE = 1.8
