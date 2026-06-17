@@ -47,6 +47,7 @@ const CULTURE_PREVIEW_IMAGE_OFFSET_X = -90
 const CULTURE_PREVIEW_IMAGE_OFFSET_Y = 0
 const CULTURE_PREVIEW_TITLE_BODY_GAP = 42
 const PLAYER_START_POSITION = { x: 400, y: 400 } as const
+const EMBROIDERY_INTRO_SEEN_FLAG = 'embroideryIntroSeen'
 const EMBROIDERY_ROOM_COMPLETION_FLAG = 'embroideryRoomCompleted'
 const EMBROIDERY_YAN_RESOLVED_FLAG = 'embroideryYanResolved'
 const PRE_FINAL_CLUE_IDS = [
@@ -232,7 +233,7 @@ export class EmbroideryRoomPhaserScene extends Phaser.Scene {
     this.bindKeys()
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.shutdown, this)
-    this.startIntroDialogue()
+    this.initializeIntroDialogue()
   }
 
   update(): void {
@@ -1210,6 +1211,22 @@ export class EmbroideryRoomPhaserScene extends Phaser.Scene {
     )
   }
 
+  private initializeIntroDialogue(): void {
+    if (this.saveSystem.isSceneCompleted(EMBROIDERY_INTRO_SEEN_FLAG)) {
+      this.introDialogueState = 'complete'
+      this.dialogueOpen = false
+      this.npcDialogueMode = 'none'
+      this.dialogueContainer.setVisible(false)
+      this.setIntroInteractionVisibility(true)
+      this.dictionaryButton.setVisible(true)
+      this.dictionaryButtonLabel.setVisible(true)
+      this.showExplorationControls()
+      return
+    }
+
+    this.startIntroDialogue()
+  }
+
   private closePreview(): void {
     this.activePreview = null
     this.culturePreviewTextVisible = false
@@ -1239,6 +1256,7 @@ export class EmbroideryRoomPhaserScene extends Phaser.Scene {
     if (this.introDialogueState === 'complete') return
 
     this.introDialogueState = 'complete'
+    this.saveSystem.markSceneCompleted(EMBROIDERY_INTRO_SEEN_FLAG)
     this.dialogueOpen = false
     this.npcDialogueMode = 'none'
     this.dialogueContainer.setVisible(false)

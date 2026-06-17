@@ -122,7 +122,7 @@ export function DictionaryOverlay({
 
     closeButtonRef.current?.focus()
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return
+      if (event.key !== 'Escape' && event.key.toLowerCase() !== 'q') return
       event.preventDefault()
       event.stopImmediatePropagation()
       if (activeClueEntryId) {

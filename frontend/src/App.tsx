@@ -79,7 +79,7 @@ function App() {
     setCurrentScene(sceneId)
   }
 
-  const resetProgress = () => {
+  const resetAllProgress = () => {
     new SaveSystem().reset()
     dictionary.resetDictionary()
     deleteSave()
@@ -90,14 +90,24 @@ function App() {
     setGameSessionKey((current) => current + 1)
   }
 
+  const resetProgress = () => {
+    resetAllProgress()
+  }
+
+  const returnToMainMenu = () => {
+    dictionary.closeDictionary()
+    if (currentScene === JIANGYONG_VILLAGE_SCENE_ID && phase === 'chapter1') {
+      saveVillageProgress()
+    }
+    setCurrentScene(JIANGYONG_VILLAGE_SCENE_ID)
+    setPhase('menu')
+  }
+
   // ─── 故事模式事件处理（用户原有逻辑） ───
 
   /** 新游戏：清除旧存档，从序章开始 */
   const handleStartGame = () => {
-    deleteSave()
-    setCurrentScene(JIANGYONG_VILLAGE_SCENE_ID)
-    setResumeProgress(ProgressStage.NOT_STARTED)
-    setVillageProgress(ProgressStage.NOT_STARTED)
+    resetAllProgress()
     setPhase('prologue')
   }
 
@@ -166,6 +176,7 @@ function App() {
             isDictionaryOpen={dictionary.isDictionaryOpen}
             openDictionary={dictionary.openDictionary}
             unlockEntry={dictionary.unlockEntry}
+            onReturnToMenu={returnToMainMenu}
           />
         )
       case 'singing-hall':
@@ -175,6 +186,7 @@ function App() {
             isDictionaryOpen={dictionary.isDictionaryOpen}
             openDictionary={dictionary.openDictionary}
             unlockEntry={dictionary.unlockEntry}
+            onReturnToMenu={returnToMainMenu}
           />
         )
       case 'jiangyong-village':
