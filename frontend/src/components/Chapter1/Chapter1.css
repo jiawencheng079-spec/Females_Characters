@@ -49,10 +49,16 @@
   cursor: pointer;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
   transition: filter 0.2s;
+  animation: boundaryBreath 2.5s ease-in-out infinite;
 }
 
 .chapter1-boundary:hover {
   filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.5)) brightness(1.1);
+}
+
+@keyframes boundaryBreath {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 
 /* ========== 信箱装饰 ========== */
@@ -65,10 +71,16 @@
   cursor: pointer;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
   transition: filter 0.2s;
+  animation: mailboxBreath 2.8s ease-in-out infinite;
 }
 
 .chapter1-mailbox:hover {
   filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.5)) brightness(1.1);
+}
+
+@keyframes mailboxBreath {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
 }
 
 /* 信箱打开后不再响应 hover */
