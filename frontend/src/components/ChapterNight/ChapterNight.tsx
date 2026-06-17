@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+﻿import { useState, useRef, useEffect } from 'react'
 import TitleCard from '../TitleCard/TitleCard'
 import RainPhaserOverlay from './RainPhaserOverlay'
 import './ChapterNight.css'
@@ -338,7 +338,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
       {isNightDialogueActive && (
         <div className="dialog-overlay" onClick={advanceNightDialogue}>
           <img
-            src="/assets/FirstLevel/AHe.png"
+            src="/assets/FirstLevel/ahe-dialogue.png"
             alt="阿禾"
             className="dialog-portrait"
           />
@@ -359,3 +359,4 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
 }
 
 export default ChapterNight
+

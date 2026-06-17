@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef, useEffect } from 'react'
+﻿import { useCallback, useState, useRef, useEffect } from 'react'
 import './Chapter1.css'
 import { ProgressStage } from '../../utils/gameSave'
 
@@ -8,15 +8,12 @@ const MOVE_SPEED = 400 // 像素/秒，与 Phaser 场景对齐
 const SCENE_SCALE = 1.8
 
 const SCENE_IMG = '/assets/FirstLevel/mainscene.png'
+const INTRO_SCENE_BG = '/assets/FirstLevel/jiangyong_intro_bg.png'
 
 /** 开场旁白，逐句展示 */
 const NARRATION_LINES = [
-  '1985年的某一天',
-  '你来到了江永做田野调查，考察学习女书文字',
-  '一名叫阿禾的女人听说村里来了"专家"，迫切地将一份资料带到了你的身前',
-  '你不是什么专家，你只是一个研究字的学生',
-  '你在书本上见过女书的拓片，但从未真正阅读过一份活的三朝书',
-  '你认得它的形状，却不认得它的语言',
+  '1985年的某一天，你作为一名文字研究学生来到江永。',
+  '阿禾带来一册残缺的三朝书，希望你帮她读懂阿姐留下的最后一句话。',
 ]
 
 interface DialogLine {
@@ -26,27 +23,20 @@ interface DialogLine {
 
 /** 阿禾对话 — 旁白结束后自动触发 */
 const DIALOG_LINES: DialogLine[] = [
-  { speaker: '阿禾', text: '您就是村里说的那个专家吧？' },
-  { speaker: '我',    text: '不是专家，只是个学生，来学女书的。' },
-  { speaker: '阿禾', text: '学生也是文化人……您就是我最后一根稻草了。您帮我看看这个。' },
+  { speaker: '阿禾', text: '您就是来江永研究女书的学生吧？' },
+  { speaker: '我',    text: '是。我还在学习，不敢说懂。' },
+  { speaker: '阿禾', text: '那也请您帮我看看这本书。它是我阿姐留下的。' },
   { speaker: '我',    text: '这是……三朝书？' },
-  { speaker: '阿禾', text: '嗯。我阿姐去世后留下的。不是她写的，是当年别人送给她的。我跟祖母学过点女书皮毛，这几页铅笔字是我自己试着译的，译得乱七八糟。' },
-  { speaker: '我',    text: '（接过书，纸页泛黄）我在书上见过拓片，但从没读过活的三朝书。我试试看。' },
-  { speaker: '阿禾', text: '阿姐临走前话都说不清了，还一直比划这本书……我想，她是想让人知道这里面写了什么。' },
-  { speaker: '我',    text: '（翻了一阵，皱眉）大部分我能慢慢琢磨……但这最后一句话，我完全看不懂，跟我学过的任何范本都对不上。' },
-  { speaker: '阿禾', text: '（凑过来看，摇头）我也卡在这里好久。' },
-  { speaker: '我',    text: '这本书交给我吧。我帮你把剩下的工作完成。' },
-  { speaker: '阿禾', text: '您愿意？' },
-  { speaker: '我',    text: '我答应你。' },
-  { speaker: '阿禾', text: '有一些字 我有一些想法，但是我不太确定，也许您能够识别正确的选项' },
+  { speaker: '阿禾', text: '嗯。不是阿姐写的，是当年姐妹送给她的。我跟祖母学过一点，只译出了几页铅笔字。' },
+  { speaker: '我',    text: '大部分还能慢慢推，可最后一句对不上。' },
+  { speaker: '阿禾', text: '阿姐临走前一直指着这本书。我想，她还有话留在里面。' },
+  { speaker: '我',    text: '我会帮你把它读完。' },
+  { speaker: '阿禾', text: '我认得几个字，却不敢确定。您能帮我一起辨一辨吗？' },
 ]
 
 /** 第二段旁白 — 对话结束后触发 */
 const NARRATION2_LINES = [
-  '这正是你此行的目的。然而这本书中的一些文字，你也无法理解——尤其是最后一句话，它和你所学过的任何范本都对不上。',
-  '你还需要一些线索，或者是帮助。',
-  '或许这个村落本身就蕴含了一些线索。',
-  '你和阿禾开始在村口转悠。信箱、老树、石墙……每一处都像藏着话，又都沉默不语。你知道答案可能就在某个最不起眼的角落，只是还没找到读懂它的方式。',
+  '请在村落、女红房与歌堂中寻找线索，辨认字形，补全这段被尘封的女书故事。',
 ]
 
 /** Quiz 题目数据 */
@@ -1111,10 +1101,19 @@ function Chapter1({
         </div>
       )}
 
-      {/* 操作提示 — 全局显示 */}
-      <div className="chapter1-hint">
-        WASD 移动 | E 交互 | Tab 词典 | Q / ESC 返回
-      </div>
+      {!narration2Done && (
+        <div
+          className="chapter1-intro-bg"
+          aria-hidden="true"
+          style={{ backgroundImage: `url(${INTRO_SCENE_BG})` }}
+        />
+      )}
+
+      {narration2Done && (
+        <div className="chapter1-hint">
+          WASD 移动 | E 交互 | Tab 词典 | Q / ESC 返回
+        </div>
+      )}
 
       {/* HUD — 第二段旁白结束后进入自由探索才显示 */}
       {narration2Done && (
@@ -1168,37 +1167,34 @@ function Chapter1({
             <p className="narration-line" key={narrationIndex}>
               {NARRATION_LINES[narrationIndex]}
             </p>
-            <span className="narration-click-hint">点击继续</span>
+            <span className="narration-click-hint">E / 点击继续</span>
           </div>
         </div>
       )}
 
       {/* 对话 — 旁白结束后显示 */}
       {dialogActive && !dialogFinished && (
-        <div className="dialog-overlay" onClick={handleDialogClick}>
-          {/* 阿禾立绘 */}
+        <div className="chapter1-main-dialog-layer" onClick={handleDialogClick}>
           <img
-            src="/assets/FirstLevel/AHe.png"
-            alt="阿禾"
-            className="dialog-portrait"
+            src="/assets/FirstLevel/ahe-dialogue.png"
+            alt=""
+            className="chapter1-main-dialogue-portrait"
+            draggable={false}
           />
-
-          <div className="dialog-box">
-            {/* 名字行 */}
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">{DIALOG_LINES[dialogIndex].speaker}</span>
-              {DIALOG_LINES[dialogIndex].speaker === '阿禾' && (
-                <span className="dialog-flower">&#10047;</span>
-              )}
+          <section
+            className="chapter1-main-dialogue"
+            role="dialog"
+            aria-label="阿禾对话"
+          >
+            <div className="chapter1-main-dialogue-name">
+              {DIALOG_LINES[dialogIndex].speaker}
             </div>
-
-            {/* 对话文本 */}
-            <p className="dialog-text" key={dialogIndex}>
+            <p className="chapter1-main-dialogue-text" key={dialogIndex}>
               {DIALOG_LINES[dialogIndex].text}
             </p>
-
-            {/* 继续提示 */}
-            <span className="dialog-next-icon">&#9660;</span>
+          </section>
+          <div className="chapter1-main-dialogue-controls">
+            E / 点击继续 | Q / ESC 返回
           </div>
         </div>
       )}
@@ -1210,7 +1206,7 @@ function Chapter1({
             <p className="narration-line" key={narration2Index}>
               {NARRATION2_LINES[narration2Index]}
             </p>
-            <span className="narration-click-hint">点击继续</span>
+            <span className="narration-click-hint">E / 点击继续</span>
           </div>
         </div>
       )}
@@ -1237,7 +1233,7 @@ function Chapter1({
       {showSwallowInfo && (
         <div className="dialog-overlay" onClick={() => setShowSwallowInfo(false)}>
           <img
-            src="/assets/FirstLevel/AHe.png"
+            src="/assets/FirstLevel/ahe-dialogue.png"
             alt="阿禾"
             className="dialog-portrait"
           />
@@ -1272,7 +1268,7 @@ function Chapter1({
       {showWinejarInfo && (
         <div className="dialog-overlay" onClick={() => setShowWinejarInfo(false)}>
           <img
-            src="/assets/FirstLevel/AHe.png"
+            src="/assets/FirstLevel/ahe-dialogue.png"
             alt="阿禾"
             className="dialog-portrait"
           />
@@ -1351,7 +1347,7 @@ function Chapter1({
       {quizImageOpen && quizImageStep === 0 && (
         <div className="dialog-overlay" onClick={closeQuizImage}>
           <img
-            src="/assets/FirstLevel/AHe.png"
+            src="/assets/FirstLevel/ahe-dialogue.png"
             alt="阿禾"
             className="dialog-portrait"
           />
@@ -1436,7 +1432,7 @@ function Chapter1({
       {quizFeedback !== null && (
         <div className="dialog-overlay" onClick={closeQuizFeedback}>
           <img
-            src="/assets/FirstLevel/AHe.png"
+            src="/assets/FirstLevel/ahe-dialogue.png"
             alt="阿禾"
             className="dialog-portrait"
           />
@@ -1462,7 +1458,7 @@ function Chapter1({
             <p className="narration-line">
               一般来讲，信的语法是怎样的呢？
             </p>
-            <span className="narration-click-hint">点击继续</span>
+            <span className="narration-click-hint">E / 点击继续</span>
           </div>
         </div>
       )}
@@ -1471,7 +1467,7 @@ function Chapter1({
       {showQ3Hint && (
         <div className="dialog-overlay" style={{ zIndex: 105 }} onClick={closeQ3Hint}>
           <img
-            src="/assets/FirstLevel/AHe.png"
+            src="/assets/FirstLevel/ahe-dialogue.png"
             alt="阿禾"
             className="dialog-portrait"
           />
@@ -1494,7 +1490,7 @@ function Chapter1({
       {matchActive && matchStep === 0 && (
         <div className="dialog-overlay" onClick={advanceMatchStep}>
           <img
-            src="/assets/FirstLevel/AHe.png"
+            src="/assets/FirstLevel/ahe-dialogue.png"
             alt="阿禾"
             className="dialog-portrait"
           />
@@ -1592,7 +1588,7 @@ function Chapter1({
       {matchCommentary !== null && (
         <div className="dialog-overlay" style={{ zIndex: 105 }} onClick={closeMatchCommentary}>
           <img
-            src="/assets/FirstLevel/AHe.png"
+            src="/assets/FirstLevel/ahe-dialogue.png"
             alt="阿禾"
             className="dialog-portrait"
           />
@@ -1611,7 +1607,7 @@ function Chapter1({
       {matchCatCommentary !== null && (
         <div className="dialog-overlay" style={{ zIndex: 106 }} onClick={closeMatchCatCommentary}>
           <img
-            src="/assets/FirstLevel/AHe.png"
+            src="/assets/FirstLevel/ahe-dialogue.png"
             alt="阿禾"
             className="dialog-portrait"
           />
@@ -1630,7 +1626,7 @@ function Chapter1({
       {matchAllWrong && (
         <div className="dialog-overlay" style={{ zIndex: 106 }} onClick={closeMatchAllWrong}>
           <img
-            src="/assets/FirstLevel/AHe.png"
+            src="/assets/FirstLevel/ahe-dialogue.png"
             alt="阿禾"
             className="dialog-portrait"
           />
@@ -1651,7 +1647,7 @@ function Chapter1({
       {matchFinalStage === 1 && (
         <div className="dialog-overlay" style={{ zIndex: 107 }} onClick={advanceQ4ToImages}>
           <img
-            src="/assets/FirstLevel/AHe.png"
+            src="/assets/FirstLevel/ahe-dialogue.png"
             alt="阿禾"
             className="dialog-portrait"
           />
@@ -1709,7 +1705,7 @@ function Chapter1({
       {matchFinalFeedback !== null && (
         <div className="dialog-overlay" style={{ zIndex: 108 }} onClick={closeQ4Feedback}>
           <img
-            src="/assets/FirstLevel/AHe.png"
+            src="/assets/FirstLevel/ahe-dialogue.png"
             alt="阿禾"
             className="dialog-portrait"
           />
@@ -1732,7 +1728,7 @@ function Chapter1({
       {matchQ3Transition && (
         <div className="dialog-overlay" style={{ zIndex: 108 }} onClick={closeQ3Transition}>
           <img
-            src="/assets/FirstLevel/AHe.png"
+            src="/assets/FirstLevel/ahe-dialogue.png"
             alt="阿禾"
             className="dialog-portrait"
           />
@@ -1760,3 +1756,4 @@ function Chapter1({
 }
 
 export default Chapter1
+

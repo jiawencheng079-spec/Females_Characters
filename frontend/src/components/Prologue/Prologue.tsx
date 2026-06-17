@@ -6,15 +6,11 @@ interface PrologueProps {
 }
 
 const PROLOGUE_LINES = [
-  '在湖南江永的群山深处，有一种文字，只属于女人。',
-  '当地妇女用这种斜体修长、形似柳叶的字符，在布面手抄本上、在扇面上、在帕子上，写下她们的一生。',
-  '她们的欢喜，她们的苦楚，她们对姊妹密友的倾诉，都被细细藏进这些字里。',
+  '湖南江永的群山深处，曾流传着一种只在女性之间使用的文字。',
+  '她们把它写在三朝书上，写在扇面与帕子上，也在女红与歌声之间，一代一代传下去。',
+  '那些修长如柳叶的字，记录着祝福、离别、牵挂，也藏着不便说出口的心事。',
   '这种文字，叫女书。',
-  '当她们聚在一起，一边做女红，一边唱读这些写在纸扇布帕上的文字，这便是当地人口中的“读纸”“读扇”“读帕”。',
-  '在歌声里，她们不再只是沉默的母亲、妻子、女儿，而是拥有自己声音和秘密世界的创作者。',
   '现在，一段尘封的女书故事等待你来开启。',
-  '请留意残卷上的字形，解读扇面中的隐语，在歌堂的吟唱中寻找线索。',
-  '在这个过程中，那些如柳叶般蜿蜒的字符，会慢慢向你展露它们的含义。',
 ] as const
 
 function Prologue({ onContinue }: PrologueProps) {
@@ -47,18 +43,17 @@ function Prologue({ onContinue }: PrologueProps) {
       <div className="prologue-shade" />
 
       <section
-        className="prologue-dialogue"
+        className="prologue-narration-overlay"
         aria-label="序言"
         onClick={advance}
       >
-        <p className="prologue-dialogue-text" key={lineIndex}>
-          {PROLOGUE_LINES[lineIndex]}
-        </p>
+        <div className="prologue-narration-box">
+          <p className="prologue-narration-line" key={lineIndex}>
+            {PROLOGUE_LINES[lineIndex]}
+          </p>
+          <span className="prologue-narration-click-hint">E / 点击继续</span>
+        </div>
       </section>
-
-      <div className="prologue-controls-hint" aria-hidden="true">
-        E / 点击继续
-      </div>
     </div>
   )
 }

@@ -14,6 +14,7 @@ import { getBgmVolume, BGM_VOLUME_CHANGE_EVENT } from './utils/audioSettings'
 import './App.css'
 
 const JIANGYONG_BGM = '/audio/jiangyong_bgm.mp3'
+const JIANGYONG_INTRO_BG = '/assets/FirstLevel/jiangyong_intro_bg.png'
 
 type GamePhase = 'menu' | 'prologue' | 'titleCard' | 'chapter1'
 
@@ -114,7 +115,8 @@ function App() {
   )
 
   const shouldShowSceneSwitcher =
-    currentScene !== JIANGYONG_VILLAGE_SCENE_ID || phase === 'chapter1'
+    currentScene !== JIANGYONG_VILLAGE_SCENE_ID ||
+    (phase === 'chapter1' && villageProgress >= ProgressStage.QUIZ)
 
   const saveVillageProgress = () => {
     if (phase !== 'chapter1') return
@@ -225,6 +227,7 @@ function App() {
       {phase === 'titleCard' && (
         <TitleCard
           title="江永村：白昼"
+          backgroundImage={JIANGYONG_INTRO_BG}
           onContinue={() => setPhase('chapter1')}
         />
       )}
