@@ -77,6 +77,8 @@ class RainScene extends Phaser.Scene {
 
     this.updateDropBounds()
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleResize, this)
+    // 监听场景销毁事件（game.destroy 触发的是 destroy 而非 shutdown）
+    this.events.on('destroy', this.onSceneDestroy, this)
   }
 
   // ── 延迟初始化 + 启动雨声（在用户手势后调用） ──
@@ -223,7 +225,7 @@ class RainScene extends Phaser.Scene {
     }
   }
 
-  shutdown(): void {
+  private onSceneDestroy = (): void => {
     this.stopRainSound()
     if (this.audioCtx) {
       this.audioCtx.close().catch(() => {})
@@ -260,6 +262,7 @@ function RainPhaserOverlay({ active }: RainPhaserOverlayProps) {
   const gameRef = useRef<Phaser.Game | null>(null)
   const sceneRef = useRef<RainScene | null>(null)
   const audioUnlockDoneRef = useRef(false)
+  const destroyingRef = useRef(false)
 
   // 获取当前场景实例
   const getScene = useCallback((): RainScene | null => {
@@ -272,44 +275,30 @@ function RainPhaserOverlay({ active }: RainPhaserOverlayProps) {
     }
   }, [])
 
-  // 用户手势监听：在 AudioContext 被挂起时提供重试机会
+  // 统一的创建/销毁生命周期
   useEffect(() => {
-    if (!active) return
-
-    const unlockAudio = () => {
-      if (audioUnlockDoneRef.current) return
-      const s = sceneRef.current || getScene()
-      if (s) {
-        // 再次尝试触发雨声（内部会检测 AudioContext 状态并 resume）
-        s.setRainAlpha(1)
+    // ── 关闭路径：先淡出雨声，再销毁 Phaser ──
+    if (!active) {
+      destroyingRef.current = true
+      if (sceneRef.current) {
+        sceneRef.current.setRainAlpha(0) // 触发淡出 + stopRainSound
       }
+      // 短暂延迟后销毁 Game（触发 scene 'destroy' 事件做最终清理）
+      const destroyTimer = setTimeout(() => {
+        if (gameRef.current) {
+          gameRef.current.destroy(true)
+          gameRef.current = null
+          sceneRef.current = null
+        }
+      }, 200)
+      return () => clearTimeout(destroyTimer)
     }
 
-    // 任意点击/按键都尝试解锁音频
-    window.addEventListener('click', unlockAudio)
-    window.addEventListener('keydown', unlockAudio)
+    // ── 打开路径：创建 Phaser Game ──
+    destroyingRef.current = false
+    if (!containerRef.current || gameRef.current) return
 
-    // 1.5 秒后如果没有成功，再自动重试一次
-    const retryTimer = setTimeout(() => {
-      unlockAudio()
-      audioUnlockDoneRef.current = true
-    }, 1500)
-
-    return () => {
-      window.removeEventListener('click', unlockAudio)
-      window.removeEventListener('keydown', unlockAudio)
-      clearTimeout(retryTimer)
-    }
-  }, [active, getScene])
-
-  // 创建 / 销毁 Phaser Game
-  useEffect(() => {
-    if (!active) return
-
-    const container = containerRef.current
-    if (!container || gameRef.current) return
-
-    const game = new Phaser.Game(createRainGameConfig(container))
+    const game = new Phaser.Game(createRainGameConfig(containerRef.current))
     gameRef.current = game
 
     const onResize = () => {
@@ -332,33 +321,37 @@ function RainPhaserOverlay({ active }: RainPhaserOverlayProps) {
     return () => {
       clearInterval(checkScene)
       window.removeEventListener('resize', onResize)
-      if (gameRef.current) {
-        gameRef.current.destroy(true)
-        gameRef.current = null
-        sceneRef.current = null
-      }
     }
   }, [active, getScene])
 
-  // active 变为 false 时淡出后销毁（备选路径）
+  // 用户手势监听：在 AudioContext 被挂起时提供重试机会
   useEffect(() => {
-    if (!active && sceneRef.current) {
-      sceneRef.current.setRainAlpha(0)
-      const timer = setTimeout(() => {
-        if (gameRef.current && !active) {
-          gameRef.current.destroy(true)
-          gameRef.current = null
-          sceneRef.current = null
-        }
-      }, 800)
-      return () => clearTimeout(timer)
-    }
-  }, [active])
+    if (!active || destroyingRef.current) return
 
-  if (!active) {
-    // 允许淡出销毁期间的残留渲染
-    return <div ref={containerRef} style={{ position: 'fixed', inset: 0, zIndex: 4, pointerEvents: 'none' }} />
-  }
+    const unlockAudio = () => {
+      if (audioUnlockDoneRef.current || destroyingRef.current) return
+      const s = sceneRef.current || getScene()
+      if (s) {
+        s.setRainAlpha(1)
+      }
+    }
+
+    window.addEventListener('click', unlockAudio)
+    window.addEventListener('keydown', unlockAudio)
+
+    const retryTimer = setTimeout(() => {
+      unlockAudio()
+      audioUnlockDoneRef.current = true
+    }, 1500)
+
+    return () => {
+      window.removeEventListener('click', unlockAudio)
+      window.removeEventListener('keydown', unlockAudio)
+      clearTimeout(retryTimer)
+    }
+  }, [active, getScene])
+
+  if (!active && !destroyingRef.current) return null
 
   return (
     <div
