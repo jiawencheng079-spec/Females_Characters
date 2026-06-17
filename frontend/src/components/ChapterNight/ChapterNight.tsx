@@ -9,9 +9,11 @@ const SCENE_IMG = '/assets/FirstLevel/mainscene.png'
 interface ChapterNightProps {
   onReturnToMenu: () => void
   isDictionaryOpen: boolean
+  openDictionary: () => void
+  unlockEntry: (entryId: string) => void
 }
 
-function ChapterNight({ onReturnToMenu, isDictionaryOpen }: ChapterNightProps) {
+function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlockEntry: _unlockEntry }: ChapterNightProps) {
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const playerWorldRef = useRef({ x: 0, y: 0 })
   const cameraRef = useRef({ x: 0, y: 0 })
@@ -70,6 +72,35 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen }: ChapterNightProps) {
   useEffect(() => {
     if (isDictionaryOpen) keysRef.current.clear()
   }, [isDictionaryOpen])
+
+  // HUD 按键（Tab 词典 / E 交互 / Q 关闭）
+  useEffect(() => {
+    const handleHudKeyDown = (event: KeyboardEvent) => {
+      if (isDictionaryOpen || !titleDone) return
+
+      // Tab — 打开词典
+      if (event.key === 'Tab') {
+        event.preventDefault()
+        openDictionary()
+        return
+      }
+
+      // Q / ESC — 暂无弹窗可关闭，预留
+      if (event.key === 'Escape' || event.key.toLowerCase() === 'q') {
+        event.preventDefault()
+        return
+      }
+
+      // E — 交互（暂无可交互物品，预留）
+      if (event.key === 'e' || event.key === 'E') {
+        event.preventDefault()
+        return
+      }
+    }
+
+    window.addEventListener('keydown', handleHudKeyDown)
+    return () => window.removeEventListener('keydown', handleHudKeyDown)
+  }, [isDictionaryOpen, titleDone, openDictionary])
 
   // 窗口 resize
   useEffect(() => {
@@ -195,10 +226,23 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen }: ChapterNightProps) {
         <div className="chapter-night-overlay" />
       )}
 
+      {/* 词典按钮 */}
+      {titleDone && (
+        <button
+          className="chapter-night-dictionary-btn"
+          type="button"
+          aria-label="打开词典"
+          onClick={openDictionary}
+        >
+          <img src="/assets/ui/open_book_icon.png" alt="" />
+          <span>词典</span>
+        </button>
+      )}
+
       {/* 操作提示 */}
       {titleDone && (
         <div className="chapter-night-hint">
-          WASD 移动 | 探索夜晚的江永村
+          WASD 移动 | E 交互 | Q/ESC 关闭 | Tab 词典
         </div>
       )}
 

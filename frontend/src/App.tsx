@@ -200,6 +200,8 @@ function App() {
           <ChapterNight
             onReturnToMenu={returnToMainMenu}
             isDictionaryOpen={dictionary.isDictionaryOpen}
+            openDictionary={dictionary.openDictionary}
+            unlockEntry={dictionary.unlockEntry}
           />
         )
     }
