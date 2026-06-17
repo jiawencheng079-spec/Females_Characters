@@ -37,14 +37,36 @@ function App() {
   // 江永村流程（MainMenu/Prologue/TitleCard/Chapter1）播放，女红房/坐歌堂暂停
   const bgmRef = useRef<HTMLAudioElement | null>(null)
 
+  // 创建 Audio 实例 + 用户交互触发播放（绕过浏览器自动播放限制）
   useEffect(() => {
-    let audio = bgmRef.current
-    if (!audio) {
-      audio = new Audio(JIANGYONG_BGM)
-      audio.loop = true
-      audio.volume = 0.4
-      bgmRef.current = audio
+    const audio = new Audio(JIANGYONG_BGM)
+    audio.loop = true
+    audio.volume = 0.4
+    bgmRef.current = audio
+
+    const tryPlay = () => {
+      if (audio.paused && currentScene === JIANGYONG_VILLAGE_SCENE_ID) {
+        audio.play().catch(() => {})
+      }
     }
+
+    // 用户首次交互时触发播放
+    const onUserInteract = () => {
+      tryPlay()
+    }
+
+    const events = ['click', 'touchstart', 'keydown']
+    events.forEach((e) => document.addEventListener(e, onUserInteract, { once: true }))
+
+    return () => {
+      events.forEach((e) => document.removeEventListener(e, onUserInteract))
+    }
+  }, [])
+
+  // 根据场景切换播放/暂停
+  useEffect(() => {
+    const audio = bgmRef.current
+    if (!audio) return
 
     if (currentScene === JIANGYONG_VILLAGE_SCENE_ID) {
       audio.play().catch(() => {})
