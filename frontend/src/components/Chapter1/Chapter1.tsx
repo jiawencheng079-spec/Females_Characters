@@ -399,7 +399,7 @@ function Chapter1({
           closeMatchCatCommentary()
           return
         }
-        if (showBookPopup) return
+        if (isQuizBusy || showBookPopup) return
         event.preventDefault()
 
         // 1. 开场旁白阶段
