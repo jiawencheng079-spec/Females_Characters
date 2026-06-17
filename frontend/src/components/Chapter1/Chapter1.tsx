@@ -131,7 +131,6 @@ interface Chapter1Props {
   onLeave: (progress: ProgressStage) => void
   onProgressChange: (progress: ProgressStage) => void
   onComplete: () => void
-  onReturnToMenu: () => void
 }
 
 function Chapter1({
@@ -142,7 +141,6 @@ function Chapter1({
   onLeave,
   onProgressChange,
   onComplete,
-  onReturnToMenu,
 }: Chapter1Props) {
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   // 红点在世界空间中的位置、摄影机中心在世界空间的位置（ref 用于动画帧，state 用于渲染）
@@ -191,7 +189,6 @@ function Chapter1({
   const [quizNarrationOpen, setQuizNarrationOpen] = useState(false)
   const [quizLetterMode, setQuizLetterMode] = useState(false)
   const [quizDone, setQuizDone] = useState(false)
-  const [quizEverStarted, setQuizEverStarted] = useState(false) // 是否已经触发过 Quiz（防止信件重复触发 Q1）
   const [quizDismissed, setQuizDismissed] = useState(false) // Q1/Q2 关闭后是否可重开
   // Q3 匹配游戏
   const [matchActive, setMatchActive] = useState(false)
@@ -421,7 +418,6 @@ function Chapter1({
 
         return
       }
-
       // ========== E 键 — 全局推进对话/旁白/探索 ==========
       if (event.key === 'e' || event.key === 'E') {
         // Q1/Q2：反馈（正确/错误）的 阿禾回应 → 关闭
@@ -558,6 +554,10 @@ function Chapter1({
         return
       }
 
+      if (event.key === 'Escape' || event.key.toLowerCase() === 'q') {
+        event.preventDefault()
+        onLeave(getSaveProgress())
+      }
     }
 
     window.addEventListener('keydown', handleHudKeyDown)
@@ -566,6 +566,7 @@ function Chapter1({
     getSaveProgress,
     isDictionaryOpen,
     narration2Done,
+    onLeave,
     openDictionary,
     showBoundaryInfo,
     showLetterPopup,
@@ -673,7 +674,7 @@ function Chapter1({
     if (quizLetterMode) {
       setQuizLetterMode(false)
       setQuizNarrationOpen(true)
-    } else if (!quizActive && !quizDone && !quizEverStarted) {
+    } else if (!quizActive && !quizDone) {
       startQuizImage(1)
     }
   }
@@ -710,7 +711,6 @@ function Chapter1({
     setQuizActive(true)
     setQuizImageOpen(true)
     setQuizImageStep(0)
-    setQuizEverStarted(true)
   }
 
   // 显示"获得新字形"提示
@@ -1088,7 +1088,7 @@ function Chapter1({
 
       {/* 操作提示 — 全局显示 */}
       <div className="chapter1-hint">
-        WASD 移动 | E 交互 | Q/ESC 关闭 | Tab 词典
+        WASD 移动 | E 交互 | Tab 词典 | Q / ESC 返回
       </div>
 
       {/* HUD — 第二段旁白结束后进入自由探索才显示 */}
@@ -1106,14 +1106,6 @@ function Chapter1({
           <div className="chapter1-clue-progress">
             线索 {clueFoundCount}/3
           </div>
-          <button
-            className="chapter1-return-btn"
-            type="button"
-            aria-label="返回主菜单"
-            onClick={onReturnToMenu}
-          >
-            返回主菜单
-          </button>
           <div
             className="chapter1-player-marker"
             aria-hidden="true"
@@ -1304,7 +1296,7 @@ function Chapter1({
 
             <div className="letter-popup-content">
               <p className="letter-text">
-                亲爱的姐妹：<br />
+                XXXXX：<br />
                 <span className="letter-text-indent">
                   <span className="letter-image-slot">
                     <img
