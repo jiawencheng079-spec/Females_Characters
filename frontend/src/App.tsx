@@ -267,6 +267,7 @@ function App() {
             isDictionaryOpen={dictionary.isDictionaryOpen}
             openDictionary={dictionary.openDictionary}
             unlockEntry={dictionary.unlockEntry}
+            unlockedEntryCount={dictionary.unlockedEntryIds.length}
           />
         )
     }

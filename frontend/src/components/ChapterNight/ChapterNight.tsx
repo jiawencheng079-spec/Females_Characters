@@ -11,9 +11,10 @@ interface ChapterNightProps {
   isDictionaryOpen: boolean
   openDictionary: () => void
   unlockEntry: (entryId: string) => void
+  unlockedEntryCount: number
 }
 
-function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlockEntry: _unlockEntry }: ChapterNightProps) {
+function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlockEntry: _unlockEntry, unlockedEntryCount }: ChapterNightProps) {
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const playerWorldRef = useRef({ x: 0, y: 0 })
   const cameraRef = useRef({ x: 0, y: 0 })
@@ -24,6 +25,38 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
   const keysRef = useRef<Set<string>>(new Set())
   const animRef = useRef<number>(0)
   const vpRef = useRef({ w: window.innerWidth, h: window.innerHeight })
+
+  // 深夜阿禾对话
+  const [nightDialogueStep, setNightDialogueStep] = useState(-1) // -1=不活跃, 0..n=对话步数
+  const nightDialogueLinesRef = useRef<string[]>([])
+
+  // titleCard 结束后触发阿禾对话
+  useEffect(() => {
+    if (!titleDone) return
+    const lines =
+      unlockedEntryCount < 5
+        ? ['夜已深了，还有一些词语没有破解，让我们继续加油吧']
+        : [
+            '已经到深夜了呢，今天真是辛苦您了，可惜我们还剩下两个字没有解开',
+            '下雨了呢，淅淅沥沥的',
+            '我还是想不出来',
+            '千言写尽犹余半，千万句语言写到最后仍然不能写完',
+            '留与XX作XX，留至什么，当作什么呢？',
+            '你有答案了吗？',
+          ]
+    nightDialogueLinesRef.current = lines
+    setNightDialogueStep(0)
+  }, [titleDone, unlockedEntryCount])
+
+  const advanceNightDialogue = () => {
+    setNightDialogueStep((prev) => {
+      if (prev < 0) return prev
+      if (prev + 1 >= nightDialogueLinesRef.current.length) return -1
+      return prev + 1
+    })
+  }
+
+  const isNightDialogueActive = nightDialogueStep >= 0
 
   // 预加载图片
   useEffect(() => {
@@ -44,7 +77,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
   // 键盘监听
   useEffect(() => {
     const onDown = (e: KeyboardEvent) => {
-      if (isDictionaryOpen || !titleDone) return
+      if (isDictionaryOpen || !titleDone || isNightDialogueActive) return
       const k = e.key.toLowerCase()
       if (['w', 'a', 's', 'd'].includes(k)) {
         e.preventDefault()
@@ -67,7 +100,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
       window.removeEventListener('keydown', onDown)
       window.removeEventListener('keyup', onUp)
     }
-  }, [isDictionaryOpen, titleDone])
+  }, [isDictionaryOpen, titleDone, isNightDialogueActive])
 
   useEffect(() => {
     if (isDictionaryOpen) keysRef.current.clear()
@@ -77,6 +110,15 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
   useEffect(() => {
     const handleHudKeyDown = (event: KeyboardEvent) => {
       if (isDictionaryOpen || !titleDone) return
+
+      // 深夜对话中：E 推进对话
+      if (isNightDialogueActive) {
+        if (event.key === 'e' || event.key === 'E') {
+          event.preventDefault()
+          advanceNightDialogue()
+        }
+        return
+      }
 
       // Tab — 打开词典
       if (event.key === 'Tab') {
@@ -100,7 +142,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
 
     window.addEventListener('keydown', handleHudKeyDown)
     return () => window.removeEventListener('keydown', handleHudKeyDown)
-  }, [isDictionaryOpen, titleDone, openDictionary])
+  }, [isDictionaryOpen, titleDone, openDictionary, isNightDialogueActive])
 
   // 窗口 resize
   useEffect(() => {
@@ -113,7 +155,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
 
   // 动画帧 — WASD 平移
   useEffect(() => {
-    if (!imgReady || isDictionaryOpen || !titleDone) return
+    if (!imgReady || isDictionaryOpen || !titleDone || isNightDialogueActive) return
 
     let lastTime = performance.now()
     const clamp = (v: number, min: number, max: number) =>
@@ -169,7 +211,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
 
     animRef.current = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(animRef.current)
-  }, [imgReady, maxX, maxY, isDictionaryOpen, titleDone, sceneW, sceneH])
+  }, [imgReady, maxX, maxY, isDictionaryOpen, titleDone, sceneW, sceneH, isNightDialogueActive])
 
   // 初始位置：画面右下角
   useEffect(() => {
@@ -266,6 +308,27 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
             transform: `translate(calc(-50% + ${playerScreenDelta.dx}px), calc(-50% + ${playerScreenDelta.dy}px))`,
           }}
         />
+      )}
+
+      {/* 深夜阿禾对话 */}
+      {isNightDialogueActive && (
+        <div className="dialog-overlay" onClick={advanceNightDialogue}>
+          <img
+            src="/assets/FirstLevel/AHe.png"
+            alt="阿禾"
+            className="dialog-portrait"
+          />
+          <div className="dialog-box">
+            <div className="dialog-name-row">
+              <span className="dialog-speaker">阿禾</span>
+              <span className="dialog-flower">&#10047;</span>
+            </div>
+            <p className="dialog-text" key={nightDialogueStep}>
+              {nightDialogueLinesRef.current[nightDialogueStep]}
+            </p>
+            <span className="dialog-next-icon">&#9660;</span>
+          </div>
+        </div>
       )}
     </div>
   )
