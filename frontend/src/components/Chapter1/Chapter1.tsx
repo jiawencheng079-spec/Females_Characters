@@ -5,7 +5,7 @@ import { ProgressStage } from '../../utils/gameSave'
 const MOVE_SPEED = 500 // 像素/秒
 
 /** 场景缩放因子 — 图片会放大到视口的 N 倍，越大探索空间越多 */
-const SCENE_SCALE = 2.5
+const SCENE_SCALE = 1.8
 
 const SCENE_IMG = '/assets/FirstLevel/mainscene.png'
 

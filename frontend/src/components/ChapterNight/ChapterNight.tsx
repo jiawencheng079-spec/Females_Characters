@@ -3,7 +3,7 @@ import TitleCard from '../TitleCard/TitleCard'
 import './ChapterNight.css'
 
 const MOVE_SPEED = 500
-const SCENE_SCALE = 2.5
+const SCENE_SCALE = 1.8
 const SCENE_IMG = '/assets/FirstLevel/mainscene.png'
 
 interface ChapterNightProps {
