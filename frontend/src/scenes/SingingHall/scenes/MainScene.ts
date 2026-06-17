@@ -213,7 +213,6 @@ export class MainScene extends Phaser.Scene {
   create(): void {
     setViewportSize(this.scale.gameSize.width, this.scale.gameSize.height);
     this.scale.on(Phaser.Scale.Events.RESIZE, this.handleViewportResize, this);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.shutdown, this);
 
     // ========== 世界边界（与底图尺寸一致）==========
     this.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
@@ -230,11 +229,6 @@ export class MainScene extends Phaser.Scene {
     )
     this.dictSystem.registerEntries('singingHall', SONG_ENTRIES)
     missingEntries.forEach((entry) => this.dictSystem.unlock(entry))
-
-    // ========== 背景音乐 ==========
-    const existingBgm = this.sound.get('singing_bgm')
-    if (existingBgm) existingBgm.destroy()
-    this.sound.add('singing_bgm', { loop: true, volume: 0.4 }).play()
 
     const singingHallClueIds = new Set([
       ...SONG_CLUES.map((clue) => clue.id),
@@ -2516,7 +2510,6 @@ export class MainScene extends Phaser.Scene {
 
   shutdown(): void {
     this.scale.off(Phaser.Scale.Events.RESIZE, this.handleViewportResize, this);
-    this.sound.stopAll();
   }
 
   setGlobalDictionaryOpen(isOpen: boolean): void {
