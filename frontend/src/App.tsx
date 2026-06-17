@@ -3,6 +3,7 @@ import MainMenu from './components/MainMenu/MainMenu'
 import Prologue from './components/Prologue/Prologue'
 import TitleCard from './components/TitleCard/TitleCard'
 import Chapter1 from './components/Chapter1/Chapter1'
+import ChapterNight from './components/ChapterNight/ChapterNight'
 import SceneSwitcher from './components/SceneSwitcher'
 import { SaveSystem } from './game/systems'
 import { loadGame, deleteSave, hasSave, saveGame, ProgressStage } from './utils/gameSave'
@@ -19,6 +20,7 @@ const SCENE_OPTIONS = [
   { id: JIANGYONG_VILLAGE_SCENE_ID, label: '江永村' },
   { id: 'embroidery-room', label: '女红房' },
   { id: 'singing-hall', label: '坐歌堂' },
+  { id: 'jiangyong-night', label: '江永村：深宵' },
 ] as const
 
 type SceneId = (typeof SCENE_OPTIONS)[number]['id']
@@ -193,6 +195,13 @@ function App() {
         )
       case 'jiangyong-village':
         return renderStoryMode()
+      case 'jiangyong-night':
+        return (
+          <ChapterNight
+            onReturnToMenu={returnToMainMenu}
+            isDictionaryOpen={dictionary.isDictionaryOpen}
+          />
+        )
     }
   }
 
