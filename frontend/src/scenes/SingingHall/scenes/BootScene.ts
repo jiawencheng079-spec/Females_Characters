@@ -135,6 +135,9 @@ export class BootScene extends Phaser.Scene {
       this.load.image(key, url);
     });
 
+    // ========== 背景音乐 ==========
+    this.load.audio('singing_bgm', '/audio/singing_bgm.mp3');
+
     // ========== 用图形生成简单贴图（不需要外部资源） ==========
     // 玩家 - 蓝色圆形
     this.createCircleTexture('player', 16, 0x4a90d9);
