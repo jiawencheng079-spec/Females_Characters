@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import TitleCard from '../TitleCard/TitleCard'
+import RainEffect from './RainEffect'
 import './ChapterNight.css'
 
 const MOVE_SPEED = 500
@@ -29,6 +30,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
   // 深夜阿禾对话
   const [nightDialogueStep, setNightDialogueStep] = useState(-1) // -1=不活跃, 0..n=对话步数
   const nightDialogueLinesRef = useRef<string[]>([])
+  const [showRain, setShowRain] = useState(false)
 
   // titleCard 结束后触发阿禾对话
   useEffect(() => {
@@ -47,6 +49,13 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
     nightDialogueLinesRef.current = lines
     setNightDialogueStep(0)
   }, [titleDone, unlockedEntryCount])
+
+  // 阿禾说完第一条对话后开始下雨
+  useEffect(() => {
+    if (nightDialogueStep >= 1 && !showRain) {
+      setShowRain(true)
+    }
+  }, [nightDialogueStep, showRain])
 
   const advanceNightDialogue = () => {
     setNightDialogueStep((prev) => {
@@ -267,6 +276,9 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
       {imgReady && titleDone && (
         <div className="chapter-night-overlay" />
       )}
+
+      {/* 雨滴效果 — 阿禾说完第一条对话后渐入 */}
+      <RainEffect active={showRain} />
 
       {/* 词典按钮 */}
       {titleDone && (
