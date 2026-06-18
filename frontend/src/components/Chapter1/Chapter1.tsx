@@ -1139,65 +1139,54 @@ function Chapter1({
             draggable={false}
           />
 
-          {/* 石碑装饰 */}
+          {/* 石碑装饰 — 仅 E 键交互 */}
           <img
             ref={boundaryRef}
             src="/assets/FirstLevel/boundary.png"
             alt="石碑"
             className={`chapter1-boundary${nearestInteractionId === 'boundary' ? ' boundary-near' : ''}`}
             draggable={false}
-            onClick={() => setShowBoundaryInfo(true)}
           />
 
-          {/* 信箱装饰 */}
+          {/* 信箱装饰 — 仅 E 键交互 */}
           <img
             ref={mailboxRef}
             src="/assets/FirstLevel/letter.png"
             alt="信箱"
             className={`chapter1-mailbox${letterDropped ? ' mailbox-open' : ''}${nearestInteractionId === 'mailbox' ? ' mailbox-near' : ''}`}
             draggable={false}
-            onClick={() => setLetterDropped(true)}
           />
 
-          {/* 燕子 */}
+          {/* 燕子 — 仅 E 键交互 */}
           <img
             ref={swallowRef}
             src="/assets/FirstLevel/swallow.png"
             alt="燕子"
             className={`chapter1-swallow${nearestInteractionId === 'swallow' ? ' swallow-near' : ''}`}
             draggable={false}
-            onClick={() => {
-              setShowSwallowInfo(true)
-            }}
           />
 
-          {/* 雪人 */}
+          {/* 雪人 — 仅 E 键交互 */}
           <img
             ref={snowRef}
             src="/assets/FirstLevel/daniang.png"
             alt="大娘"
             className={`chapter1-snow${nearestInteractionId === 'snow' ? ' snow-near' : ''}`}
             draggable={false}
-            onClick={() => {
-              setShowSnowInfo(true)
-            }}
           />
 
-          {/* 酒坛 */}
+          {/* 酒坛 — 仅 E 键交互 */}
           <img
             ref={winejarRef}
             src="/assets/FirstLevel/Winejar.png"
             alt="酒坛"
             className={`chapter1-winejar${nearestInteractionId === 'winejar' ? ' winejar-near' : ''}`}
             draggable={false}
-            onClick={() => {
-              setShowWinejarInfo(true)
-            }}
           />
 
           {/* 掉落的信件 — 替代图 */}
           {letterDropped && (
-            <div ref={droppedLetterRef} className={`dropped-letter${nearestInteractionId === 'letter' ? ' dropped-letter-near' : ''}`} onClick={() => setShowLetterPopup(true)}>
+            <div ref={droppedLetterRef} className={`dropped-letter${nearestInteractionId === 'letter' ? ' dropped-letter-near' : ''}`}>
               <span className="dropped-letter-icon">&#9993;</span>
             </div>
           )}
