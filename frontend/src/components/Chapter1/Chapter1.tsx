@@ -207,6 +207,14 @@ function Chapter1({
   const [quizQ1Done, setQuizQ1Done] = useState(false) // Q1 已正确完成，等待 label 触发 Q2
   const [quizQ2Done, setQuizQ2Done] = useState(false) // Q2 已正确完成，防止 label 重复触发
   const [labelStep, setLabelStep] = useState(0) // label 多段对话步骤 0-3
+  // 线索发现追踪 — 7 个可交互对象
+  const [clueFoundIds, setClueFoundIds] = useState<Set<string>>(new Set())
+  const markClueFound = useCallback((id: string) => {
+    setClueFoundIds((prev) => {
+      if (prev.has(id)) return prev
+      return new Set([...prev, id])
+    })
+  }, [])
   const [postQ1DialogueStep, setPostQ1DialogueStep] = useState(-1) // Q1正确后额外对话：-1=未激活, 0=阿禾, 1=旁白
   const [guideDictDone, setGuideDictDone] = useState(false) // 新手引导字典匹配已完成
   const [guideDictDismissed, setGuideDictDismissed] = useState(false) // 台词是否已关闭
@@ -663,20 +671,27 @@ function Chapter1({
           setNearestInteractionId(nearestId)
 
           if (nearestId === 'winejar') {
+            markClueFound('winejar')
             setShowWinejarInfo(true)
           } else if (nearestId === 'snow') {
+            markClueFound('snow')
             setShowSnowInfo(true)
           } else if (nearestId === 'swallow') {
+            markClueFound('swallow')
             setShowSwallowInfo(true)
           } else if (nearestId === 'letter') {
+            markClueFound('letter')
             setShowLetterPopup(true)
           } else if (nearestId === 'mailbox') {
+            markClueFound('mailbox')
             setLetterDropped(true)
             setLetterDropAnimDone(false) // 触发下落动画
           } else if (nearestId === 'boundary') {
+            markClueFound('boundary')
             setShowBoundaryInfo(true)
           } else if (nearestId === 'label') {
             if (quizQ2Done) return // Q2 已完成，禁止重复触发
+            markClueFound('label')
             setShowLabelInfo(true)
             setLabelStep(0)
           }
@@ -1213,17 +1228,10 @@ function Chapter1({
     setMatchQ3Transition(false)
   }
 
-  const clueFoundCount = [
-    bookPopupShown ||
-      letterDropped ||
-      showLetterPopup ||
-      quizActive ||
-      quizDone ||
-      matchActive ||
-      matchFinalStage > 0,
-    matchActive || matchFinalStage > 0 || quizDone,
-    matchFinalStage > 0 || (quizDone && !matchActive),
-  ].filter(Boolean).length
+  // 线索计数：玩家交互过的线索数，达到 7/7 的完成条件为全部交互或完成 Q3
+  const clueFoundCount = quizDone || matchQ3Transition
+    ? 7
+    : clueFoundIds.size
 
   const renderCharacterDialogue = ({
     speaker,
@@ -1389,7 +1397,7 @@ function Chapter1({
             </button>
           )}
           <div className="chapter1-clue-progress">
-            线索 {clueFoundCount}/3
+            线索 {clueFoundCount}/7
           </div>
           <div
             className="chapter1-player-marker"
