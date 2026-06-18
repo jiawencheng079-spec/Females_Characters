@@ -576,6 +576,9 @@
   width: auto;
   vertical-align: middle;
   margin: 0 0.15em;
+  background: #fff;
+  border-radius: 3px;
+  padding: 2px;
 }
 
 @keyframes chapter1DialogTextIn {
