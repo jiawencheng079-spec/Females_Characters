@@ -1908,6 +1908,17 @@ function Chapter1({
         </div>
       )}
 
+      {/* 返回主菜单按钮 */}
+      {narration2Done && tutorialPhase === 'done' && postQ1DialogueStep < 0 && !(guideDictDone && !guideDictDismissed) && (
+        <button
+          className="chapter1-return-btn"
+          type="button"
+          onClick={() => onLeave(getSaveProgress())}
+        >
+          返回主菜单
+        </button>
+      )}
+
     </div>
   )
 }
