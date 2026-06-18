@@ -1297,35 +1297,35 @@
 
 /* ========== Quiz 反馈（复用 dialog-overlay 样式） ========== */
 
-/* ========== 获得新字形提示 ========== */
+/* ========== 获得新字形提示（对齐女工房 Phaser Toast 样式） ========== */
 .glyph-toast {
   position: fixed;
-  top: 15%;
+  top: 100px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 200;
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.8rem 2rem;
-  background: linear-gradient(135deg, rgba(42, 31, 20, 0.94), rgba(30, 21, 13, 0.94));
-  border: 1px solid rgba(201, 168, 124, 0.55);
-  border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(201, 168, 124, 0.25), 0 0 40px rgba(0, 0, 0, 0.35);
-  animation: glyphToastIn 0.4s ease, glyphToastOut 0.4s ease 2.1s forwards;
+  height: 66px;
+  padding: 0 20px;
+  background: rgba(93, 39, 34, 0.94);
+  border-radius: 0;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  animation: glyphToastIn 0.4s ease, glyphToastOut 0.4s ease 1.8s forwards;
 }
 
 .glyph-toast-icon {
-  font-size: 1.3rem;
-  color: #d4a853;
-  text-shadow: 0 0 8px rgba(212, 168, 83, 0.5);
+  font-size: 26px;
+  color: #f7e8ca;
 }
 
 .glyph-toast-text {
-  font-family: 'STKaiti', 'KaiTi', 'SimSun', serif;
-  font-size: 1.15rem;
-  color: #ede5d3;
+  font-family: "SimSun", "Microsoft YaHei", serif;
+  font-size: 26px;
+  color: #f7e8ca;
   letter-spacing: 0.08em;
+  line-height: 66px;
 }
 
 @keyframes glyphToastIn {

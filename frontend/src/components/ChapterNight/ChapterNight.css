@@ -508,3 +508,54 @@
     font-size: 16px;
   }
 }
+
+/* ========== 获得新字形提示（对齐女工房 Phaser Toast 样式） ========== */
+.chapter-night-glyph-toast {
+  position: fixed;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 66px;
+  padding: 0 20px;
+  background: rgba(93, 39, 34, 0.94);
+  border-radius: 0;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+  animation: chapterNightGlyphToastIn 0.4s ease, chapterNightGlyphToastOut 0.4s ease 1.8s forwards;
+}
+
+.chapter-night-glyph-toast-icon {
+  font-size: 26px;
+  color: #f7e8ca;
+}
+
+.chapter-night-glyph-toast-text {
+  font-family: "SimSun", "Microsoft YaHei", serif;
+  font-size: 26px;
+  color: #f7e8ca;
+  letter-spacing: 0.08em;
+  line-height: 66px;
+}
+
+@keyframes chapterNightGlyphToastIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes chapterNightGlyphToastOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
