@@ -1187,7 +1187,7 @@ function Chapter1({
           {/* 掉落的信件 — 替代图 */}
           {letterDropped && (
             <div ref={droppedLetterRef} className={`dropped-letter${nearestInteractionId === 'letter' ? ' dropped-letter-near' : ''}`}>
-              <span className="dropped-letter-icon">&#9993;</span>
+              <img src="/assets/FirstLevel/envelope.png" alt="信件" className="dropped-letter-img" />
             </div>
           )}
         </div>

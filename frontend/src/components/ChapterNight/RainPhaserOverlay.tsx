@@ -275,6 +275,17 @@ function RainPhaserOverlay({ active }: RainPhaserOverlayProps) {
     }
   }, [])
 
+  // 组件卸载时强制销毁 Phaser Game（防止 active=true 时卸载导致雨声残留）
+  useEffect(() => {
+    return () => {
+      if (gameRef.current) {
+        gameRef.current.destroy(true)
+        gameRef.current = null
+        sceneRef.current = null
+      }
+    }
+  }, [])
+
   // 统一的创建/销毁生命周期
   useEffect(() => {
     // ── 关闭路径：先淡出雨声，再销毁 Phaser ──
