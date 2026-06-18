@@ -6,7 +6,6 @@
   height: 100vh;
   overflow: hidden;
   background-color: #1a1008;
-  cursor: crosshair;
   user-select: none;
   font-family: 'SimSun', 'Microsoft YaHei', serif;
 }
@@ -58,17 +57,16 @@
   width: 5%;
   height: auto;
   cursor: pointer;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
-  transition: filter 0.2s, transform 0.2s;
+  opacity: 0.92;
+  transition: opacity 160ms ease, transform 160ms ease;
   animation: boundaryBreath 2.5s ease-in-out infinite;
 }
 
 .chapter1-boundary:hover,
 .chapter1-boundary.boundary-near {
   animation: none;
-  transform: scale(1.4);
-  filter: drop-shadow(0 0 14px rgba(255, 205, 128, 0.85))
-          drop-shadow(0 6px 14px rgba(94, 50, 34, 0.4));
+  opacity: 1;
+  transform: scale(1.25);
 }
 
 @keyframes boundaryBreath {
@@ -84,17 +82,16 @@
   width: 4%;
   height: auto;
   cursor: pointer;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
-  transition: filter 0.2s, transform 0.2s;
+  opacity: 0.92;
+  transition: opacity 160ms ease, transform 160ms ease;
   animation: mailboxBreath 2.8s ease-in-out infinite;
 }
 
 .chapter1-mailbox:hover,
 .chapter1-mailbox.mailbox-near {
   animation: none;
-  transform: scale(1.4);
-  filter: drop-shadow(0 0 14px rgba(255, 205, 128, 0.85))
-          drop-shadow(0 6px 14px rgba(94, 50, 34, 0.4));
+  opacity: 1;
+  transform: scale(1.25);
 }
 
 @keyframes mailboxBreath {
@@ -105,7 +102,8 @@
 /* 信箱打开后不再响应 hover */
 .chapter1-mailbox.mailbox-open {
   cursor: default;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.35));
+  opacity: 0.92;
+  transform: none;
 }
 
 /* ========== 燕子装饰 ========== */
@@ -116,17 +114,16 @@
   width: 10%;
   height: auto;
   cursor: pointer;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
-  transition: filter 0.2s, transform 0.2s;
+  opacity: 0.92;
+  transition: opacity 160ms ease, transform 160ms ease;
   animation: swallowBreath 3s ease-in-out infinite;
 }
 
 .chapter1-swallow:hover,
 .chapter1-swallow.swallow-near {
   animation: none;
-  transform: scale(1.4);
-  filter: drop-shadow(0 0 14px rgba(255, 205, 128, 0.85))
-          drop-shadow(0 6px 14px rgba(94, 50, 34, 0.4));
+  opacity: 1;
+  transform: scale(1.25);
 }
 
 @keyframes swallowBreath {
@@ -138,22 +135,21 @@
 /* ========== 雪人装饰 ========== */
 .chapter1-snow {
   position: absolute;
-  left: 40%;
-  top: 65%;
-  width: 20%;
+  left: 56%;
+  top: 35%;
+  width: 14%;
   height: auto;
   cursor: pointer;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
-  transition: filter 0.2s, transform 0.2s;
+  opacity: 0.92;
+  transition: opacity 160ms ease, transform 160ms ease;
   animation: snowBreath 3s ease-in-out infinite;
 }
 
 .chapter1-snow:hover,
 .chapter1-snow.snow-near {
   animation: none;
-  transform: scale(1.4);
-  filter: drop-shadow(0 0 14px rgba(255, 205, 128, 0.85))
-          drop-shadow(0 6px 14px rgba(94, 50, 34, 0.4));
+  opacity: 1;
+  transform: scale(1.16);
 }
 
 @keyframes snowBreath {
@@ -164,22 +160,21 @@
 /* ========== 酒坛装饰 ========== */
 .chapter1-winejar {
   position: absolute;
-  left: 55%;
+  left: 20%;
   top: 75%;
-  width: 3%;
+  width: 14%;
   height: auto;
   cursor: pointer;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
-  transition: filter 0.2s, transform 0.2s;
+  opacity: 0.92;
+  transition: opacity 160ms ease, transform 160ms ease;
   animation: winejarBreath 3s ease-in-out infinite;
 }
 
 .chapter1-winejar:hover,
 .chapter1-winejar.winejar-near {
   animation: none;
-  transform: scale(1.4);
-  filter: drop-shadow(0 0 14px rgba(255, 205, 128, 0.85))
-          drop-shadow(0 6px 14px rgba(94, 50, 34, 0.4));
+  opacity: 1;
+  transform: scale(1.25);
 }
 
 @keyframes winejarBreath {
@@ -204,13 +199,14 @@
   animation: letterDrop 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
   cursor: pointer;
   pointer-events: auto;
+  opacity: 0.92;
+  transition: opacity 160ms ease, transform 160ms ease;
 }
 
 .dropped-letter:hover,
 .dropped-letter.dropped-letter-near {
-  transform: scale(1.4);
-  filter: drop-shadow(0 0 14px rgba(255, 205, 128, 0.85))
-          drop-shadow(0 6px 14px rgba(94, 50, 34, 0.4));
+  opacity: 1;
+  transform: scale(1.25);
 }
 
 .dropped-letter-icon {
@@ -464,7 +460,15 @@
 }
 
 /* ========== 对话框 ========== */
-.dialog-overlay {
+@keyframes portraitIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ========== 主线阿禾对话（对齐女红房） ========== */
+/* ========== 信件内容弹窗 ========== */
+/* ========== 统一人物对话框（对齐女红房 Phaser） ========== */
+.chapter1-dialog-layer {
   position: fixed;
   inset: 0;
   z-index: 85;
@@ -472,113 +476,22 @@
   overflow: hidden;
 }
 
-.dialog-portrait {
+.chapter1-dialog-portrait {
   position: absolute;
-  bottom: -35vh;
   left: 50%;
-  transform: translateX(-50%);
-  height: 110vh;
+  bottom: -72vh;
+  z-index: 1;
   width: auto;
+  height: min(210vh, 2050px);
   object-fit: contain;
   object-position: bottom center;
   pointer-events: none;
-  z-index: 1;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.45));
+  user-select: none;
+  transform: translateX(-50%);
   animation: portraitIn 0.6s ease;
 }
 
-@keyframes portraitIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-
-.dialog-box {
-  position: absolute;
-  bottom: 4vh;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  width: min(88vw, 1500px);
-  min-height: 300px;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 2.5rem clamp(60px, 6%, 120px) 2.5rem clamp(160px, 24%, 360px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  box-sizing: border-box;
-}
-
-.dialog-box::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: url('/assets/FirstLevel/conversation.png') center/100% 100% no-repeat;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.dialog-name-row,
-.dialog-text,
-.dialog-next-icon {
-  position: relative;
-  z-index: 1;
-}
-
-.dialog-name-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  margin-bottom: 0.6em;
-  margin-left: clamp(-40px, -7%, -110px);
-}
-
-.dialog-speaker {
-  font-family: 'STKaiti', 'KaiTi', 'SimSun', serif;
-  font-size: 34px;
-  color: #f4ddbf;
-  letter-spacing: 0.15em;
-}
-
-.dialog-flower {
-  color: #e8b4a0;
-  font-size: 1rem;
-}
-
-.dialog-text {
-  font-family: 'STKaiti', 'KaiTi', 'SimSun', serif;
-  font-size: 29px;
-  line-height: 48px;
-  color: #f1f1ee;
-  letter-spacing: 0.08em;
-  margin: 0;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
-  animation: dialogTextIn 0.25s ease;
-  overflow-wrap: break-word;
-  word-break: break-word;
-}
-
-@keyframes dialogTextIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.dialog-next-icon {
-  position: absolute;
-  bottom: 10px;
-  right: 16px;
-  font-size: 0.75rem;
-  color: rgba(220, 200, 170, 0.45);
-  animation: nextPulse 1.2s ease-in-out infinite;
-}
-
-@keyframes nextPulse {
-  0%, 100% { opacity: 0.3; transform: translateY(0); }
-  50%      { opacity: 0.7; transform: translateY(2px); }
-}
-
-@keyframes chapter1MainDialogueIn {
+@keyframes chapter1DialogueIn {
   from {
     opacity: 0;
     transform: translateX(-50%) translateY(18px);
@@ -589,32 +502,7 @@
   }
 }
 
-/* ========== 主线阿禾对话（对齐女红房） ========== */
-.chapter1-main-dialog-layer {
-  position: fixed;
-  inset: 0;
-  z-index: 85;
-  cursor: pointer;
-  overflow: hidden;
-}
-
-.chapter1-main-dialogue-portrait {
-  position: absolute;
-  left: 50%;
-  bottom: -85vh;
-  z-index: 1;
-  width: auto;
-  height: min(195vh, 1900px);
-  object-fit: contain;
-  object-position: bottom center;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.45));
-  pointer-events: none;
-  user-select: none;
-  transform: translateX(-50%);
-  animation: portraitIn 0.6s ease;
-}
-
-.chapter1-main-dialogue {
+.chapter1-dialog-box {
   position: absolute;
   left: 50%;
   bottom: 25px;
@@ -624,10 +512,10 @@
   color: #f1f1ee;
   filter: drop-shadow(0 18px 26px rgba(24, 18, 16, 0.35));
   transform: translateX(-50%);
-  animation: chapter1MainDialogueIn 230ms ease both;
+  animation: chapter1DialogueIn 230ms ease both;
 }
 
-.chapter1-main-dialogue::before {
+.chapter1-dialog-box::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -636,13 +524,13 @@
   pointer-events: none;
 }
 
-.chapter1-main-dialogue-name,
-.chapter1-main-dialogue-text {
+.chapter1-dialog-name,
+.chapter1-dialog-text {
   position: absolute;
   z-index: 1;
 }
 
-.chapter1-main-dialogue-name {
+.chapter1-dialog-name {
   left: calc(50% - 500px);
   top: 110px;
   color: #f4ddbf;
@@ -652,7 +540,7 @@
   transform: translate(-50%, -50%);
 }
 
-.chapter1-main-dialogue-text {
+.chapter1-dialog-text {
   left: calc(50% - 390px);
   top: 91px;
   width: 790px;
@@ -665,10 +553,15 @@
   text-shadow: none;
   overflow-wrap: break-word;
   word-break: break-word;
-  animation: dialogTextIn 0.25s ease;
+  animation: chapter1DialogTextIn 0.25s ease;
 }
 
-.chapter1-main-dialogue-controls {
+@keyframes chapter1DialogTextIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.chapter1-dialog-controls {
   position: fixed;
   left: 50%;
   bottom: 24px;
@@ -685,38 +578,37 @@
 }
 
 @media (max-width: 900px) {
-  .chapter1-main-dialogue-name {
+  .chapter1-dialog-name {
     left: 18%;
   }
 
-  .chapter1-main-dialogue-text {
+  .chapter1-dialog-text {
     left: 24%;
     width: 68%;
   }
 }
 
 @media (max-width: 560px) {
-  .chapter1-main-dialogue-portrait {
+  .chapter1-dialog-portrait {
     height: 145vh;
     bottom: -62vh;
   }
 
-  .chapter1-main-dialogue-name {
+  .chapter1-dialog-name {
     font-size: 24px;
   }
 
-  .chapter1-main-dialogue-text {
+  .chapter1-dialog-text {
     top: 96px;
     font-size: 21px;
     line-height: 36px;
   }
 
-  .chapter1-main-dialogue-controls {
+  .chapter1-dialog-controls {
     font-size: 16px;
   }
 }
 
-/* ========== 信件内容弹窗 ========== */
 .letter-popup-overlay {
   position: fixed;
   inset: 0;
@@ -794,6 +686,124 @@
   background: #fff;
   padding: 2px;
   object-fit: contain;
+}
+
+/* ========== 物件全屏预览（对齐坐歌堂） ========== */
+.chapter1-object-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  cursor: pointer;
+  animation: fadeIn 0.3s ease;
+}
+
+.chapter1-object-preview-stage {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 48px 112px;
+  box-sizing: border-box;
+}
+
+.chapter1-object-preview-image {
+  display: block;
+  max-width: min(88vw, 1500px);
+  max-height: calc(100vh - 150px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 20px 38px rgba(0, 0, 0, 0.45));
+  user-select: none;
+}
+
+.chapter1-object-preview-book {
+  max-width: min(82vw, 1120px);
+  max-height: calc(100vh - 150px);
+}
+
+.chapter1-object-preview-card,
+.chapter1-object-preview-letter {
+  max-width: min(860px, 82vw);
+  max-height: calc(100vh - 150px);
+  overflow: auto;
+  color: #eadcc5;
+  background: rgba(20, 16, 13, 0.72);
+  border: 1px solid rgba(232, 213, 183, 0.34);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.45);
+}
+
+.chapter1-object-preview-card {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.78fr) 1fr;
+  gap: 28px;
+  align-items: center;
+  padding: 28px;
+}
+
+.chapter1-object-preview-location {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border: 1px solid rgba(232, 213, 183, 0.24);
+}
+
+.chapter1-object-preview-text {
+  margin: 0;
+  color: #eadcc5;
+  font-family: 'STKaiti', 'KaiTi', 'SimSun', serif;
+  font-size: clamp(1rem, 1.6vw, 1.45rem);
+  line-height: 2;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-indent: 2em;
+}
+
+.chapter1-object-preview-letter {
+  width: min(660px, 82vw);
+  padding: 42px 38px;
+  background:
+    linear-gradient(rgba(245, 235, 214, 0.96), rgba(227, 209, 174, 0.96));
+  color: #3a2a1a;
+}
+
+.chapter1-object-preview-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 50px;
+  z-index: 101;
+  padding: 8px 20px;
+  color: #a89984;
+  background-color: #00000088;
+  font-family: 'SimSun', 'Microsoft YaHei', serif;
+  font-size: 22px;
+  line-height: normal;
+  text-align: center;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 700px) {
+  .chapter1-object-preview-stage {
+    padding: 32px 24px 96px;
+  }
+
+  .chapter1-object-preview-card {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 22px;
+  }
+
+  .chapter1-object-preview-hint {
+    bottom: 34px;
+    font-size: 16px;
+  }
 }
 
 /* ========== 三朝书弹窗 ========== */

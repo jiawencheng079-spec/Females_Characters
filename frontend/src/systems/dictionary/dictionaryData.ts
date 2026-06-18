@@ -61,7 +61,7 @@ export const entries: readonly DictionaryEntry[] = [
     nushuImages: [nushuAsset('jun')],
     targetSlots: ['line-1-lord'],
     meaning: '对所思、所赠之人的敬称，也寄托着书写者的牵念。',
-    position: { x: 18, y: 17 },
+    position: { x: 36, y: 21 },
     size: 68,
   },
   {
@@ -72,7 +72,7 @@ export const entries: readonly DictionaryEntry[] = [
     nushuImages: [nushuAsset('jun')],
     targetSlots: ['line-3-lord'],
     meaning: '对所思、所赠之人的敬称，也寄托着书写者的牵念。',
-    position: { x: 10, y: 27 },
+    position: { x: 14, y: 34 },
     size: 68,
   },
   {
@@ -83,7 +83,7 @@ export const entries: readonly DictionaryEntry[] = [
     nushuImages: [nushuAsset('chun'), nushuAsset('feng')],
     targetSlots: ['line-1-spring-breeze'],
     meaning: '温暖和煦的风，在诗中也象征顺遂的新程。',
-    position: { x: 46, y: 13 },
+    position: { x: 60, y: 20 },
     size: 82,
   },
   {
@@ -94,7 +94,7 @@ export const entries: readonly DictionaryEntry[] = [
     nushuImages: [nushuAsset('wang')],
     targetSlots: ['line-3-forget'],
     meaning: '不再记得。此处以反问写离别之后仍不会忘却。',
-    position: { x: 76, y: 18 },
+    position: { x: 81, y: 28 },
     size: 64,
   },
   {
@@ -105,7 +105,7 @@ export const entries: readonly DictionaryEntry[] = [
     nushuImages: [nushuAsset('ji')],
     targetSlots: ['line-3-remember'],
     meaning: '记取、留存，让姓名与情谊在岁月中仍可追寻。',
-    position: { x: 88, y: 34 },
+    position: { x: 90, y: 48 },
     size: 58,
   },
   {
@@ -116,7 +116,7 @@ export const entries: readonly DictionaryEntry[] = [
     nushuImages: [nushuAsset('shen'), nushuAsset('xiao')],
     targetSlots: ['line-4-deep-night'],
     meaning: '夜色最深之时，常与独坐、思念和私语相连。',
-    position: { x: 64, y: 38 },
+    position: { x: 66, y: 42 },
     size: 78,
   },
   {
@@ -127,7 +127,7 @@ export const entries: readonly DictionaryEntry[] = [
     nushuImages: [nushuAsset('yu'), nushuAsset('sheng')],
     targetSlots: ['line-4-rain-sound'],
     meaning: '雨落的声音，在末句中承接未尽的话语与余情。',
-    position: { x: 28, y: 43 },
+    position: { x: 34, y: 53 },
     size: 72,
   },
   {
@@ -163,7 +163,7 @@ export const entries: readonly DictionaryEntry[] = [
       '手里做着针线，耳边听着别人读。',
       '一边绣，一边念，一边记，这就叫{{nushu}}。',
     ],
-    position: { x: 43, y: 61 },
+    position: { x: 44, y: 66 },
     size: 78,
   },
   {
@@ -180,7 +180,7 @@ export const entries: readonly DictionaryEntry[] = [
       '这方帕，不能拖到明日了。',
       '我{{nushu}}日就要把它绣完。',
     ],
-    position: { x: 76, y: 58 },
+    position: { x: 77, y: 63 },
     size: 66,
   },
   {
@@ -198,7 +198,7 @@ export const entries: readonly DictionaryEntry[] = [
       '口中不能{{nushu}}，就让针线替她写。',
       '所以帕上的字，不只是字。',
     ],
-    position: { x: 88, y: 71 },
+    position: { x: 86, y: 75 },
     size: 62,
   },
   {
@@ -216,7 +216,7 @@ export const entries: readonly DictionaryEntry[] = [
       '帕角要留她的{{nushu}}。',
       '这样多年以后，也还记得是谁送的。',
     ],
-    position: { x: 61, y: 78 },
+    position: { x: 58, y: 80 },
     size: 70,
   },
   {
@@ -252,7 +252,7 @@ export const entries: readonly DictionaryEntry[] = [
       '扇面题写歌辞，既能传情，也能留住共同的记忆。',
       '姐妹们围坐唱{{nushu}}，声音在屋中绕了一圈又落回来。',
     ],
-    position: { x: 12, y: 36 },
+    position: { x: 19, y: 47 },
     size: 68,
   },
   {
@@ -270,7 +270,7 @@ export const entries: readonly DictionaryEntry[] = [
       '姐妹们互相传抄歌本，{{nushu}}角已被磨损。',
       '{{nushu}}上只留两行字，心中却有万重山。',
     ],
-    position: { x: 46, y: 35 },
+    position: { x: 49, y: 43 },
     size: 56,
   },
   {
@@ -288,7 +288,7 @@ export const entries: readonly DictionaryEntry[] = [
       '愿{{nushu}}之人，仍记旧时歌声。',
       '离别不是遗忘，而是另一种记取。',
     ],
-    position: { x: 82, y: 87 },
+    position: { x: 77, y: 87 },
     size: 80,
   },
 ]
