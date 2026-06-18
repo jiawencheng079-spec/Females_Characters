@@ -1,4 +1,4 @@
-/* ========== 遮罩层 ========== */
+/* ========== 遮罩层（对齐词典线索卡片风格） ========== */
 .settings-overlay {
   position: fixed;
   inset: 0;
@@ -6,88 +6,122 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(20, 10, 5, 0.65);
-  backdrop-filter: blur(4px);
-  animation: settingsFadeIn 0.3s ease;
+  background:
+    linear-gradient(rgba(18, 14, 12, 0.7), rgba(18, 14, 12, 0.78)),
+    radial-gradient(circle at 45% 52%, rgba(152, 109, 70, 0.17), transparent 52%);
+  backdrop-filter: blur(8px) saturate(0.68);
+  animation: settingsBackdropIn 180ms ease both;
 }
 
-@keyframes settingsFadeIn {
+.settings-overlay::before {
+  position: absolute;
+  inset: -8%;
+  content: "";
+  background:
+    radial-gradient(circle at 18% 68%, rgba(219, 183, 126, 0.11), transparent 24%),
+    radial-gradient(circle at 83% 42%, rgba(91, 49, 40, 0.18), transparent 29%);
+  filter: blur(20px);
+  pointer-events: none;
+}
+
+@keyframes settingsBackdropIn {
   from { opacity: 0; }
-  to   { opacity: 1; }
 }
 
-/* ========== 弹窗主体 ========== */
+/* ========== 弹窗主体（对齐 .dictionary-clue-card） ========== */
 .settings-modal {
   position: relative;
-  width: min(420px, 85vw);
-  background: linear-gradient(180deg, #faf6ed 0%, #f3ebd8 100%);
-  border: 2px solid #c9a87c;
-  border-radius: 8px;
+  width: min(440px, 34vw);
+  background:
+    linear-gradient(90deg, rgba(110, 67, 42, 0.08), transparent 16%, transparent 84%, rgba(110, 67, 42, 0.08)),
+    linear-gradient(#f4e7c8, #ead7ae);
+  border: 1px solid rgba(122, 76, 51, 0.62);
+  border-radius: 2px;
   box-shadow:
-    0 8px 40px rgba(60, 30, 10, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    inset 0 0 0 5px rgba(255, 248, 229, 0.27),
+    0 24px 42px rgba(0, 0, 0, 0.42);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: settingsSlideUp 0.35s ease;
+  animation: settingsSlideUp 280ms ease both;
+}
+
+.settings-modal::before {
+  position: absolute;
+  inset: 12px;
+  content: "";
+  border: 1px solid rgba(143, 57, 47, 0.16);
+  pointer-events: none;
+  z-index: 0;
 }
 
 @keyframes settingsSlideUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(16px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ========== 关闭按钮 ========== */
+/* ========== 关闭按钮（对齐 .dictionary-clue-close） ========== */
 .settings-close {
   position: absolute;
-  top: 12px;
-  right: 16px;
-  padding: 4px 16px;
-  border: 1px solid #c9a87c;
-  border-radius: 4px;
-  background: rgba(250, 246, 237, 0.9);
-  color: #8b4530;
+  z-index: 2;
+  right: 15px;
+  top: 14px;
+  width: 34px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid rgba(103, 43, 35, 0.7);
+  border-radius: 2px;
+  color: #f1ddb5;
+  background: #8e392f;
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 13px;
   cursor: pointer;
-  z-index: 10;
-  transition: all 0.2s;
+  transition: background 0.15s;
 }
 
-.settings-close:hover {
-  background: #8b4530;
-  color: #fff;
-  border-color: #8b4530;
+.settings-close:hover,
+.settings-close:focus-visible {
+  background: #68251f;
+  outline: 2px solid rgba(242, 223, 185, 0.9);
+  outline-offset: 2px;
 }
 
 /* ========== 内容区 ========== */
 .settings-body {
-  padding: 2rem 2rem 2.5rem;
-  font-family: 'STKaiti', 'KaiTi', 'SimSun', serif;
-  color: #3a2a1a;
+  position: relative;
+  z-index: 1;
+  padding: clamp(24px, 2vw, 34px);
+  font-family: "SimSun", "Microsoft YaHei", serif;
+  color: #382a25;
 }
 
 .settings-body h2 {
-  font-size: 1.5rem;
-  color: #5a3020;
-  margin: 0 0 1.2em;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 18px;
+  color: #71332d;
+  font-size: clamp(22px, 1.85vw, 31px);
+  font-weight: 400;
+  letter-spacing: 0;
   text-align: center;
-  letter-spacing: 0.25em;
 }
 
 .settings-body h3 {
-  font-size: 1.1rem;
-  color: #8b4530;
+  color: #71332d;
+  font-size: clamp(16px, 1.2vw, 20px);
+  font-weight: 400;
   margin: 0 0 0.8em;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.08em;
   text-align: center;
   padding-bottom: 0.5em;
-  border-bottom: 1px solid rgba(201, 168, 124, 0.4);
+  border-bottom: 1px solid rgba(143, 57, 47, 0.16);
 }
 
 /* ========== 分区 ========== */
 .settings-section {
-  margin-bottom: 1.8em;
+  margin-bottom: 1.6em;
 }
 
 /* ========== 行 ========== */
@@ -95,14 +129,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.6em 0;
+  padding: 0.5em 0;
   gap: 1em;
+  font-size: clamp(14px, 1vw, 17px);
 }
 
 .setting-label {
-  font-size: 1rem;
-  color: #4a3020;
-  letter-spacing: 0.1em;
+  color: #382a25;
+  letter-spacing: 0.08em;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -122,7 +156,7 @@
   width: 140px;
   height: 6px;
   border-radius: 3px;
-  background: linear-gradient(90deg, #d4b896, #a85c42);
+  background: linear-gradient(90deg, #d4b896, #8e392f);
   outline: none;
   cursor: pointer;
 }
@@ -133,8 +167,8 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #8b4530;
-  border: 2px solid #faf6ed;
+  background: #8e392f;
+  border: 2px solid #f4e7c8;
   box-shadow: 0 1px 4px rgba(60, 30, 10, 0.3);
   cursor: pointer;
   transition: transform 0.15s;
@@ -148,15 +182,15 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: #8b4530;
-  border: 2px solid #faf6ed;
+  background: #8e392f;
+  border: 2px solid #f4e7c8;
   box-shadow: 0 1px 4px rgba(60, 30, 10, 0.3);
   cursor: pointer;
 }
 
 .slider-val {
-  font-size: 0.9rem;
-  color: #8b4530;
+  font-size: clamp(14px, 1vw, 17px);
+  color: #71332d;
   min-width: 2em;
   text-align: right;
 }
@@ -168,26 +202,46 @@
 }
 
 .speed-btn {
-  padding: 0.35em 1.2em;
-  border: 1px solid #c9a87c;
-  border-radius: 4px;
-  background: rgba(250, 246, 237, 0.8);
-  color: #8b4530;
-  font-family: inherit;
-  font-size: 0.95rem;
-  letter-spacing: 0.15em;
+  padding: 0.3em 1.2em;
+  border: 1px solid rgba(122, 76, 51, 0.62);
+  border-radius: 2px;
+  background: rgba(244, 231, 200, 0.6);
+  color: #382a25;
+  font-family: "SimSun", "Microsoft YaHei", serif;
+  font-size: clamp(14px, 1vw, 17px);
+  letter-spacing: 0.08em;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .speed-btn:hover {
-  background: rgba(201, 168, 124, 0.2);
+  background: rgba(143, 57, 47, 0.12);
 }
 
 .speed-btn.active {
-  background: #8b4530;
-  color: #faf6ed;
-  border-color: #8b4530;
+  background: #8e392f;
+  color: #f1ddb5;
+  border-color: rgba(103, 43, 35, 0.7);
 }
 
+/* ========== 响应式 ========== */
+@media (max-width: 720px) {
+  .settings-modal {
+    width: min(380px, 88vw);
+  }
 
+  .settings-body h2 {
+    font-size: clamp(18px, 4vw, 24px);
+  }
+
+  .settings-body h3 {
+    font-size: clamp(14px, 3vw, 18px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-overlay,
+  .settings-modal {
+    animation-duration: 0.01ms !important;
+  }
+}

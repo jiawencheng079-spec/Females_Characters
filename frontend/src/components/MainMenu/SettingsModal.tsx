@@ -76,11 +76,11 @@ function SettingsModal({ visible, onClose }: SettingsModalProps) {
         </button>
 
         <div className="settings-body">
-          <h2>⚙ 设置</h2>
+          <h2>设置</h2>
 
           {/* ===== 音量 ===== */}
           <section className="settings-section">
-            <h3>🎵 音量</h3>
+            <h3>音量</h3>
 
             <div className="setting-row">
               <label className="setting-label" htmlFor="bgm-vol">背景音乐</label>
@@ -117,7 +117,7 @@ function SettingsModal({ visible, onClose }: SettingsModalProps) {
 
           {/* ===== 文本显示 ===== */}
           <section className="settings-section">
-            <h3>📝 文本显示</h3>
+            <h3>文本显示</h3>
 
             <div className="setting-row">
               <span className="setting-label">文本速度</span>
