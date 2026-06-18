@@ -202,6 +202,8 @@ function Chapter1({
   const [quizLetterMode, setQuizLetterMode] = useState(false)
   const [quizDone, setQuizDone] = useState(false)
   const [quizDismissed, setQuizDismissed] = useState(false) // Q1/Q2 关闭后是否可重开
+  const [quizQ1Done, setQuizQ1Done] = useState(false) // Q1 已正确完成，等待 label 触发 Q2
+  const [labelStep, setLabelStep] = useState(0) // label 多段对话步骤 0-3
   // Q3 匹配游戏
   const [matchActive, setMatchActive] = useState(false)
   const [matchStep, setMatchStep] = useState(0) // 0=阿禾说话, 1=匹配界面
@@ -458,6 +460,7 @@ function Chapter1({
         if (showSnowInfo) { setShowSnowInfo(false); return }
         if (showWinejarInfo) { setShowWinejarInfo(false); return }
         if (showBookPopup) { handleBookPopupClose(); return }
+        if (showLabelInfo) { setShowLabelInfo(false); setLabelStep(0); return }
 
         return
       }
@@ -538,6 +541,11 @@ function Chapter1({
           closeLetterPopup()
           return
         }
+        if (showLabelInfo) {
+          event.preventDefault()
+          advanceLabelDialogue()
+          return
+        }
         if (isQuizBusy) return
         event.preventDefault()
 
@@ -614,6 +622,7 @@ function Chapter1({
             setShowBoundaryInfo(true)
           } else if (nearestId === 'label') {
             setShowLabelInfo(true)
+            setLabelStep(0)
           }
         }
         return
@@ -683,6 +692,8 @@ function Chapter1({
     matchQ3Transition,
     showQ3Hint,
     matchEverStarted,
+    showLabelInfo,
+    labelStep,
   ])
 
   // 恢复存档进度：快进到对应阶段
@@ -707,11 +718,13 @@ function Chapter1({
     if (resumeProgress >= ProgressStage.MATCH_Q3) {
       setQuizDone(true)
       setQuizActive(false)
+      setQuizQ1Done(true)
     }
     if (resumeProgress >= ProgressStage.IN_MATCH) {
       // 直接打开匹配游戏
       setQuizDone(true)
       setQuizActive(false)
+      setQuizQ1Done(true)
       setMatchActive(true)
       setMatchStep(1)
     }
@@ -782,7 +795,7 @@ function Chapter1({
     if (quizLetterMode) {
       setQuizLetterMode(false)
       setQuizNarrationOpen(true)
-    } else if (!quizActive && !quizDone && !quizDismissed) {
+    } else if (!quizActive && !quizDone && !quizDismissed && !quizQ1Done) {
       startQuizImage(1)
     }
   }
@@ -864,7 +877,9 @@ function Chapter1({
     setQuizFeedback(null)
     if (isCorrect) {
       if (quizQuestion === 1) {
-        startQuizImage(2)
+        // Q1 正确 → 不再自动触发 Q2，等玩家探索 label 时触发
+        setQuizQ1Done(true)
+        setQuizActive(false)
       } else {
         // Q2 正确 → 阿禾发言 → 匹配题界面 → 阿禾提示
         setQuizActive(false)
@@ -882,6 +897,17 @@ function Chapter1({
       // Q2 错误：重新展示四张图，看完后再选
       setQuizImageOpen(true)
       setQuizImageStep(1)
+    }
+  }
+
+  // label 多段对话推进 → 最后一步触发 Q2
+  const advanceLabelDialogue = () => {
+    if (labelStep < 3) {
+      setLabelStep((s) => s + 1)
+    } else {
+      setShowLabelInfo(false)
+      setLabelStep(0)
+      startQuizImage(2)
     }
   }
 
@@ -1124,12 +1150,14 @@ function Chapter1({
     onClick,
     portraitSrc = AHE_DIALOGUE_IMG,
     zIndex = 85,
+    children,
   }: {
     speaker: string
-    text: string
+    text?: string
     onClick: () => void
     portraitSrc?: string
     zIndex?: number
+    children?: React.ReactNode
   }) => (
     <div
       className="chapter1-dialog-layer"
@@ -1148,7 +1176,11 @@ function Chapter1({
         aria-label={`${speaker}对话`}
       >
         <div className="chapter1-dialog-name">{speaker}</div>
-        <p className="chapter1-dialog-text" key={text}>{text}</p>
+        {children ? (
+          <div className="chapter1-dialog-text">{children}</div>
+        ) : text ? (
+          <p className="chapter1-dialog-text" key={text}>{text}</p>
+        ) : null}
       </section>
       <div className="chapter1-dialog-controls">
         E / 点击继续 | Q / ESC 返回
@@ -1392,11 +1424,37 @@ function Chapter1({
         onClick: () => setShowWinejarInfo(false),
       })}
 
-      {/* 标签信息弹窗 */}
-      {showLabelInfo && renderCharacterDialogue({
+      {/* 标签多段对话 — 最后一段触发 Q2 */}
+      {showLabelInfo && labelStep === 0 && renderCharacterDialogue({
         speaker: '阿禾',
-        text: '这个标签上写着一些字，似乎与女书有关。',
-        onClick: () => setShowLabelInfo(false),
+        text: '这棵树下，以前有人挂小木牌。',
+        onClick: advanceLabelDialogue,
+      })}
+      {showLabelInfo && labelStep === 1 && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '不是为了求什么大事，只是怕有些人、有些话，被日子冲走。',
+        onClick: advanceLabelDialogue,
+      })}
+      {showLabelInfo && labelStep === 2 && renderCharacterDialogue({
+        speaker: '阿禾',
+        onClick: advanceLabelDialogue,
+        children: (
+          <>
+            写下来，挂在这里，就是想让人
+            <img
+              src="/assets/FirstLevel/remember1.png"
+              alt="记"
+              className="chapter1-dialog-inline-img"
+              draggable={false}
+            />
+            得。
+          </>
+        ),
+      })}
+      {showLabelInfo && labelStep === 3 && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '这四个字，我知道分别是忘记和记得的意思，可是到底谁是谁呢？',
+        onClick: advanceLabelDialogue,
       })}
 
       {/* 石碑信息弹窗 */}

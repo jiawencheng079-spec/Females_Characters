@@ -569,6 +569,15 @@
   animation: chapter1DialogTextIn 0.25s ease;
 }
 
+/* 对话中内嵌图片（如 [记] → remember2.png） */
+.chapter1-dialog-inline-img {
+  display: inline;
+  height: 1.4em;
+  width: auto;
+  vertical-align: middle;
+  margin: 0 0.15em;
+}
+
 @keyframes chapter1DialogTextIn {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
