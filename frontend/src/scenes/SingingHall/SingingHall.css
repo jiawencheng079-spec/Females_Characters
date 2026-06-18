@@ -5,6 +5,7 @@
   min-height: 100dvh;
   overflow: hidden;
   background: #0d0d1a;
+  cursor: url('/assets/ui/cursor_custom.png') 8 8, auto;
 }
 
 .singing-hall__game {
