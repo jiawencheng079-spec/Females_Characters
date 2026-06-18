@@ -191,6 +191,13 @@ class RainScene extends Phaser.Scene {
     }
   }
 
+  /** 外部调用：设置雨声音量 (0~1) */
+  setRainVolume(vol: number): void {
+    if (this.rainGain && this.audioCtx && this.soundPlaying) {
+      this.rainGain.gain.setTargetAtTime(vol, this.audioCtx.currentTime, 0.6)
+    }
+  }
+
   update(_time: number, delta: number): void {
     const dt = delta / 1000
 
@@ -255,9 +262,10 @@ function createRainGameConfig(parent: HTMLElement): Phaser.Types.Core.GameConfig
 // ── React 包装组件 ──
 interface RainPhaserOverlayProps {
   active: boolean
+  volume?: number
 }
 
-function RainPhaserOverlay({ active }: RainPhaserOverlayProps) {
+function RainPhaserOverlay({ active, volume }: RainPhaserOverlayProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const gameRef = useRef<Phaser.Game | null>(null)
   const sceneRef = useRef<RainScene | null>(null)
@@ -361,6 +369,15 @@ function RainPhaserOverlay({ active }: RainPhaserOverlayProps) {
       clearTimeout(retryTimer)
     }
   }, [active, getScene])
+
+  // 雨声音量同步
+  useEffect(() => {
+    if (volume === undefined) return
+    const s = sceneRef.current || getScene()
+    if (s) {
+      s.setRainVolume(volume)
+    }
+  }, [volume, getScene])
 
   if (!active && !destroyingRef.current) return null
 
