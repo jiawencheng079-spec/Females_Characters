@@ -325,6 +325,27 @@
   transform: translateX(-50%);
 }
 
+/* 线索交互提示 — 红色方框，与场景二 interactHint 对齐 */
+.chapter1-interact-hint {
+  position: fixed;
+  left: 50%;
+  bottom: 105px;
+  z-index: 91;
+  transform: translate(-50%, 50%);
+  width: 430px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(74, 41, 35, 0.92);
+  border: 2px solid #d2b47b;
+  border-radius: 4px;
+  color: #f7e8ca;
+  font-family: 'SimSun', 'Microsoft YaHei', serif;
+  font-size: 26px;
+  pointer-events: none;
+}
+
 .chapter1-player-marker {
   position: fixed;
   left: 50%;
