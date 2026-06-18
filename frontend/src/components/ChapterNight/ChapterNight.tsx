@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+﻿import { useState, useRef, useEffect } from 'react'
 import TitleCard from '../TitleCard/TitleCard'
+import RainPhaserOverlay from './RainPhaserOverlay'
 import './ChapterNight.css'
 
 const MOVE_SPEED = 500
@@ -29,6 +30,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
   // 深夜阿禾对话
   const [nightDialogueStep, setNightDialogueStep] = useState(-1) // -1=不活跃, 0..n=对话步数
   const nightDialogueLinesRef = useRef<string[]>([])
+  const [showRain, setShowRain] = useState(false)
 
   // titleCard 结束后触发阿禾对话
   useEffect(() => {
@@ -48,7 +50,26 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
     setNightDialogueStep(0)
   }, [titleDone, unlockedEntryCount])
 
+  // 雨声先导延迟标记（防止延迟期间误触跳过）
+  const rainDelayRef = useRef(false)
+
+  // 阿禾说完第一条对话后开始下雨 + 1.5s 雨声先导
   const advanceNightDialogue = () => {
+    if (nightDialogueStep < 0) return
+    if (rainDelayRef.current) return // 雨声先导期间阻塞输入
+
+    // 完整对话中，推进第一条后先播雨声，延迟再出阿禾的话
+    if (nightDialogueStep === 0 && nightDialogueLinesRef.current.length > 1 && !showRain) {
+      setShowRain(true)
+      rainDelayRef.current = true
+      setNightDialogueStep(-1) // 暂时隐藏对话框
+      setTimeout(() => {
+        rainDelayRef.current = false
+        setNightDialogueStep(1) // 1.5s 后展示"下雨了呢，淅淅沥沥的"
+      }, 1500)
+      return
+    }
+
     setNightDialogueStep((prev) => {
       if (prev < 0) return prev
       if (prev + 1 >= nightDialogueLinesRef.current.length) return -1
@@ -268,6 +289,9 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
         <div className="chapter-night-overlay" />
       )}
 
+      {/* 雨滴效果 — Phaser WebGL 渲染，阿禾说完第一条对话后渐入 */}
+      <RainPhaserOverlay active={showRain} />
+
       {/* 词典按钮 */}
       {titleDone && (
         <button
@@ -314,7 +338,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
       {isNightDialogueActive && (
         <div className="dialog-overlay" onClick={advanceNightDialogue}>
           <img
-            src="/assets/FirstLevel/AHe.png"
+            src="/assets/FirstLevel/ahe-dialogue.png"
             alt="阿禾"
             className="dialog-portrait"
           />
@@ -335,3 +359,4 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
 }
 
 export default ChapterNight
+

@@ -128,6 +128,7 @@ export function DictionaryOverlay({
   const unlockedUniqueLabelCount = unlockedUniqueLabels.size
   const remainingByUniqueLabel = uniqueLabelTotal - unlockedUniqueLabelCount
   const shouldShowGuide = !hasSeenGuide && !activeClueEntry
+  const guideState = draggingEntryId ? 'drag' : shouldShowGuide ? 'read' : null
   const placedEntryIds = useMemo(
     () => new Set(Object.values(placedSlots)),
     [placedSlots],
@@ -277,11 +278,6 @@ export function DictionaryOverlay({
           >
             合
           </button>
-          {draggingEntryId && (
-            <p className="dictionary-drop-guide" role="status">
-              将字牌放入空缺处。
-            </p>
-          )}
         </div>
 
         <aside className="glyph-orbit-area">
@@ -327,6 +323,8 @@ export function DictionaryOverlay({
                   }
                   aria-pressed={isActive}
                   onClick={() => {
+                    if (!isUnlocked) return
+
                     onDismissGuide()
                     if (isPuzzleTarget) {
                       onSelectEntry(entry.id)
@@ -367,20 +365,6 @@ export function DictionaryOverlay({
             })}
           </div>
 
-          {shouldShowGuide && (
-            <div className="dictionary-first-guide" role="note">
-              <span>点按女书字，可读她留下的线索。</span>
-              <span>按住已得字牌，拖入残卷空缺处。</span>
-              <button
-                type="button"
-                onClick={onDismissGuide}
-                aria-label="收起词典引导"
-              >
-                知
-              </button>
-            </div>
-          )}
-
           {feedback && (
             <p
               className={`dictionary-feedback-toast is-${feedback.type}`}
@@ -390,6 +374,19 @@ export function DictionaryOverlay({
             </p>
           )}
         </aside>
+
+        {guideState && (
+          <div
+            className={`dictionary-interaction-guide is-${guideState}`}
+            role={guideState === 'drag' ? 'status' : 'note'}
+          >
+            <span>
+              {guideState === 'drag'
+                ? '按住字牌 | 拖入残卷空缺'
+                : '鼠标点按 女书字 | 读取线索'}
+            </span>
+          </div>
+        )}
 
         {activeClueEntry && (
           <div

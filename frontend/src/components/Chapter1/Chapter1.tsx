@@ -1,22 +1,39 @@
-import { useCallback, useState, useRef, useEffect } from 'react'
+﻿import { useCallback, useState, useRef, useEffect } from 'react'
 import './Chapter1.css'
 import { ProgressStage } from '../../utils/gameSave'
 
 const MOVE_SPEED = 400 // 像素/秒，与 Phaser 场景对齐
 
 /** 场景缩放因子 — 图片会放大到视口的 N 倍，越大探索空间越多 */
-const SCENE_SCALE = 1.8
+const SCENE_SCALE = 2
 
 const SCENE_IMG = '/assets/FirstLevel/mainscene.png'
+const INTRO_SCENE_BG = '/assets/FirstLevel/jiangyong_intro_bg.png'
+const AHE_DIALOGUE_IMG = '/assets/FirstLevel/ahe-dialogue.png'
+const DANIANG_DIALOGUE_IMG = '/assets/FirstLevel/daniang.png'
+const CHAPTER1_INTERACT_DISTANCE = 150
+
+type Chapter1InteractionId =
+  | 'boundary'
+  | 'mailbox'
+  | 'letter'
+  | 'swallow'
+  | 'snow'
+  | 'winejar'
+
+const CHAPTER1_INTERACTION_LABELS: Record<Chapter1InteractionId, string> = {
+  boundary: '石碑',
+  mailbox: '信箱',
+  letter: '信件',
+  swallow: '燕子',
+  snow: '大娘',
+  winejar: '酒坛',
+}
 
 /** 开场旁白，逐句展示 */
 const NARRATION_LINES = [
-  '1985年的某一天',
-  '你来到了江永做田野调查，考察学习女书文字',
-  '一名叫阿禾的女人听说村里来了"专家"，迫切地将一份资料带到了你的身前',
-  '你不是什么专家，你只是一个研究字的学生',
-  '你在书本上见过女书的拓片，但从未真正阅读过一份活的三朝书',
-  '你认得它的形状，却不认得它的语言',
+  '1985年的某一天，你作为一名文字研究学生来到江永。',
+  '阿禾带来一册残缺的三朝书，希望你帮她读懂阿姐留下的最后一句话。',
 ]
 
 interface DialogLine {
@@ -26,27 +43,20 @@ interface DialogLine {
 
 /** 阿禾对话 — 旁白结束后自动触发 */
 const DIALOG_LINES: DialogLine[] = [
-  { speaker: '阿禾', text: '您就是村里说的那个专家吧？' },
-  { speaker: '我',    text: '不是专家，只是个学生，来学女书的。' },
-  { speaker: '阿禾', text: '学生也是文化人……您就是我最后一根稻草了。您帮我看看这个。' },
+  { speaker: '阿禾', text: '您就是来江永研究女书的学生吧？' },
+  { speaker: '我',    text: '是。我还在学习，不敢说懂。' },
+  { speaker: '阿禾', text: '那也请您帮我看看这本书。它是我阿姐留下的。' },
   { speaker: '我',    text: '这是……三朝书？' },
-  { speaker: '阿禾', text: '嗯。我阿姐去世后留下的。不是她写的，是当年别人送给她的。我跟祖母学过点女书皮毛，这几页铅笔字是我自己试着译的，译得乱七八糟。' },
-  { speaker: '我',    text: '（接过书，纸页泛黄）我在书上见过拓片，但从没读过活的三朝书。我试试看。' },
-  { speaker: '阿禾', text: '阿姐临走前话都说不清了，还一直比划这本书……我想，她是想让人知道这里面写了什么。' },
-  { speaker: '我',    text: '（翻了一阵，皱眉）大部分我能慢慢琢磨……但这最后一句话，我完全看不懂，跟我学过的任何范本都对不上。' },
-  { speaker: '阿禾', text: '（凑过来看，摇头）我也卡在这里好久。' },
-  { speaker: '我',    text: '这本书交给我吧。我帮你把剩下的工作完成。' },
-  { speaker: '阿禾', text: '您愿意？' },
-  { speaker: '我',    text: '我答应你。' },
-  { speaker: '阿禾', text: '有一些字 我有一些想法，但是我不太确定，也许您能够识别正确的选项' },
+  { speaker: '阿禾', text: '嗯。不是阿姐写的，是当年姐妹送给她的。我跟祖母学过一点，只译出了几页铅笔字。' },
+  { speaker: '我',    text: '大部分还能慢慢推，可最后一句对不上。' },
+  { speaker: '阿禾', text: '阿姐临走前一直指着这本书。我想，她还有话留在里面。' },
+  { speaker: '我',    text: '我会帮你把它读完。' },
+  { speaker: '阿禾', text: '我认得几个字，却不敢确定。您能帮我一起辨一辨吗？' },
 ]
 
 /** 第二段旁白 — 对话结束后触发 */
 const NARRATION2_LINES = [
-  '这正是你此行的目的。然而这本书中的一些文字，你也无法理解——尤其是最后一句话，它和你所学过的任何范本都对不上。',
-  '你还需要一些线索，或者是帮助。',
-  '或许这个村落本身就蕴含了一些线索。',
-  '你和阿禾开始在村口转悠。信箱、老树、石墙……每一处都像藏着话，又都沉默不语。你知道答案可能就在某个最不起眼的角落，只是还没找到读懂它的方式。',
+  '请在村落、女红房与歌堂中寻找线索，辨认字形，补全这段被尘封的女书故事。',
 ]
 
 /** Quiz 题目数据 */
@@ -66,7 +76,7 @@ const MATCH_LEFT_ITEMS  = ['丝带笔触', '燕子', '冻僵的手', '读音']
 const MATCH_RIGHT_ITEMS = ['柳条', '温暖的风', '诗', '雪']
 
 /** Q3 匹配游戏 — 下方分类盒 */
-const MATCH_CATEGORIES = ['燕子', '老伯', '酒坛']
+const MATCH_CATEGORIES = ['燕子', '大娘', '酒坛']
 
 /** Q3 匹配游戏 — 每个词条放置后阿禾的补充对话 */
 const MATCH_COMMENTARY: Record<string, string> = {
@@ -85,9 +95,9 @@ const MATCH_CORRECT: Record<string, string> = {
   '丝带笔触': '燕子',
   '燕子': '燕子',
   '柳条': '燕子',
-  '冻僵的手': '老伯',
-  '温暖的风': '老伯',
-  '雪': '老伯',
+  '冻僵的手': '大娘',
+  '温暖的风': '大娘',
+  '雪': '大娘',
   '读音': '酒坛',
   '诗': '酒坛',
 }
@@ -101,7 +111,7 @@ const CATEGORY_COMPLETION: Record<string, { correct: string[]; commentary: strin
     correct: ['丝带笔触', '燕子', '柳条'],
     commentary: '丝带飘起来的样子……像柳条，窗外的燕子叽叽喳喳',
   },
-  '老伯': {
+  '大娘': {
     correct: ['冻僵的手', '温暖的风', '雪'],
     commentary: '那天好像下雪？我的手冻僵了写不稳，先生说它是微冷的',
   },
@@ -152,15 +162,11 @@ function Chapter1({
   const [showBoundaryInfo, setShowBoundaryInfo] = useState(false)
   const [letterDropped, setLetterDropped] = useState(false)
   const [showLetterPopup, setShowLetterPopup] = useState(false)
-  // 玩家靠近可交互物体的高亮状态
-  const [isNearBoundary, setIsNearBoundary] = useState(false)
-  const [isNearMailbox, setIsNearMailbox] = useState(false)
-  const [isNearDroppedLetter, setIsNearDroppedLetter] = useState(false)
-  const [isNearSwallow, setIsNearSwallow] = useState(false)
+  // 玩家靠近可交互物体时，只高亮最近的一个目标
+  const [nearestInteractionId, setNearestInteractionId] = useState<Chapter1InteractionId | null>(null)
+  const nearestInteractionRef = useRef<Chapter1InteractionId | null>(null)
   const [showSwallowInfo, setShowSwallowInfo] = useState(false)
-  const [isNearSnow, setIsNearSnow] = useState(false)
   const [showSnowInfo, setShowSnowInfo] = useState(false)
-  const [isNearWinejar, setIsNearWinejar] = useState(false)
   const [showWinejarInfo, setShowWinejarInfo] = useState(false)
   const boundaryRef = useRef<HTMLImageElement>(null)
   const mailboxRef = useRef<HTMLImageElement>(null)
@@ -213,6 +219,38 @@ function Chapter1({
   const keysRef = useRef<Set<string>>(new Set())
   const animRef = useRef<number>(0)
   const vpRef = useRef({ w: window.innerWidth, h: window.innerHeight })
+
+  const getNearestInteractionId = useCallback((playerX: number, playerY: number): Chapter1InteractionId | null => {
+    const interactions: Array<{
+      id: Chapter1InteractionId
+      el: HTMLElement | null
+      enabled: boolean
+    }> = [
+      { id: 'winejar', el: winejarRef.current, enabled: true },
+      { id: 'snow', el: snowRef.current, enabled: true },
+      { id: 'swallow', el: swallowRef.current, enabled: true },
+      { id: 'letter', el: droppedLetterRef.current, enabled: letterDropped },
+      { id: 'mailbox', el: mailboxRef.current, enabled: !letterDropped },
+      { id: 'boundary', el: boundaryRef.current, enabled: true },
+    ]
+
+    let nearestId: Chapter1InteractionId | null = null
+    let nearestDistance = CHAPTER1_INTERACT_DISTANCE
+
+    interactions.forEach(({ id, el, enabled }) => {
+      if (!enabled || !el) return
+      const rect = el.getBoundingClientRect()
+      const cx = rect.left + rect.width / 2
+      const cy = rect.top + rect.height / 2
+      const distance = Math.hypot(cx - playerX, cy - playerY)
+      if (distance < nearestDistance) {
+        nearestId = id
+        nearestDistance = distance
+      }
+    })
+
+    return nearestId
+  }, [letterDropped])
 
   // 预加载图片
   useEffect(() => {
@@ -334,39 +372,34 @@ function Chapter1({
       // 6. 高亮检测 — 使用红点的实际屏幕坐标
       const playerScrX = halfW + screenDx
       const playerScrY = halfH + screenDy
-      const threshold = 150
-      const isNear = (el: HTMLElement | null): boolean => {
-        if (!el) return false
-        const rect = el.getBoundingClientRect()
-        const cx = rect.left + rect.width / 2
-        const cy = rect.top + rect.height / 2
-        return Math.hypot(cx - playerScrX, cy - playerScrY) < threshold
-      }
-      setIsNearBoundary(isNear(boundaryRef.current))
-      setIsNearMailbox(isNear(mailboxRef.current))
-      setIsNearDroppedLetter(isNear(droppedLetterRef.current))
-      setIsNearSwallow(isNear(swallowRef.current))
-      setIsNearSnow(isNear(snowRef.current))
-      setIsNearWinejar(isNear(winejarRef.current))
+      const nearestId = getNearestInteractionId(playerScrX, playerScrY)
+      nearestInteractionRef.current = nearestId
+      setNearestInteractionId(nearestId)
 
       animRef.current = requestAnimationFrame(loop)
     }
 
     animRef.current = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(animRef.current)
-  }, [imgReady, maxX, maxY, isDictionaryOpen, showBoundaryInfo, showLetterPopup, showSwallowInfo, showSnowInfo, showWinejarInfo, showBookPopup, isQuizBusy, narrationDone, dialogActive, dialogFinished, narration2Active, narration2Done, sceneW, sceneH])
+  }, [imgReady, maxX, maxY, isDictionaryOpen, showBoundaryInfo, showLetterPopup, showSwallowInfo, showSnowInfo, showWinejarInfo, showBookPopup, isQuizBusy, narrationDone, dialogActive, dialogFinished, narration2Active, narration2Done, sceneW, sceneH, getNearestInteractionId])
 
-  // 图片加载后把初始位置定在画面右下角
+  // 图片加载后把初始位置对齐 Phaser 场景的出生点
   useEffect(() => {
     if (!imgReady) return
     const hw = vpRef.current.w / 2
     const hh = vpRef.current.h / 2
-    // 摄像机初始位置：场景右下区域
-    cameraRef.current = { x: maxX + hw, y: maxY + hh }
-    playerWorldRef.current = { x: cameraRef.current.x, y: cameraRef.current.y }
-    setOffset({ x: maxX, y: maxY })
-    setPlayerScreenDelta({ dx: 0, dy: 0 })
-  }, [imgReady, maxX, maxY])
+    const startX = 400
+    const startY = 400
+    const clamp = (v: number, min: number, max: number) =>
+      Math.max(min, Math.min(max, v))
+    const camX = clamp(startX, hw, sceneW - hw)
+    const camY = clamp(startY, hh, sceneH - hh)
+
+    cameraRef.current = { x: camX, y: camY }
+    playerWorldRef.current = { x: startX, y: startY }
+    setOffset({ x: camX - hw, y: camY - hh })
+    setPlayerScreenDelta({ dx: startX - camX, dy: startY - camY })
+  }, [imgReady, sceneW, sceneH])
 
   // 计算当前进度（存档用）
   const getSaveProgress = useCallback((): ProgressStage => {
@@ -412,11 +445,11 @@ function Chapter1({
         if (matchCatCommentary !== null) { closeMatchCatCommentary(); return }
         if (matchActive && matchStep === 1) { closeMatchGame(); return }
         if (showBoundaryInfo) { setShowBoundaryInfo(false); return }
-        if (showLetterPopup) { setShowLetterPopup(false); return }
+        if (showLetterPopup) { closeLetterPopup(); return }
         if (showSwallowInfo) { setShowSwallowInfo(false); return }
         if (showSnowInfo) { setShowSnowInfo(false); return }
         if (showWinejarInfo) { setShowWinejarInfo(false); return }
-        if (showBookPopup) { setShowBookPopup(false); return }
+        if (showBookPopup) { handleBookPopupClose(); return }
 
         return
       }
@@ -482,7 +515,22 @@ function Chapter1({
           closeMatchCatCommentary()
           return
         }
-        if (isQuizBusy || showBookPopup) return
+        if (showBookPopup) {
+          event.preventDefault()
+          handleBookPopupClose()
+          return
+        }
+        if (showBoundaryInfo) {
+          event.preventDefault()
+          setShowBoundaryInfo(false)
+          return
+        }
+        if (showLetterPopup) {
+          event.preventDefault()
+          closeLetterPopup()
+          return
+        }
+        if (isQuizBusy) return
         event.preventDefault()
 
         // 1. 开场旁白阶段
@@ -519,34 +567,28 @@ function Chapter1({
           return
         }
 
-        // 4. 自由探索阶段 — 检测玩家是否靠近可交互物体
+        // 4. 自由探索阶段 — 触发最近的可交互物体
         if (narration2Done && !showBoundaryInfo && !showLetterPopup) {
           const screenDx = playerWorldRef.current.x - cameraRef.current.x
           const screenDy = playerWorldRef.current.y - cameraRef.current.y
           const playerX = vpRef.current.w / 2 + screenDx
           const playerY = vpRef.current.h / 2 + screenDy
-          const threshold = 150
 
-          const isNear = (el: HTMLElement | null): boolean => {
-            if (!el) return false
-            const rect = el.getBoundingClientRect()
-            const cx = rect.left + rect.width / 2
-            const cy = rect.top + rect.height / 2
-            return Math.hypot(cx - playerX, cy - playerY) < threshold
-          }
+          const nearestId = getNearestInteractionId(playerX, playerY)
+          nearestInteractionRef.current = nearestId
+          setNearestInteractionId(nearestId)
 
-          // 优先级：酒坛 > 雪人 > 燕子 > 掉落的信件 > 信箱 > 界碑
-          if (isNear(winejarRef.current)) {
+          if (nearestId === 'winejar') {
             setShowWinejarInfo(true)
-          } else if (isNear(snowRef.current)) {
+          } else if (nearestId === 'snow') {
             setShowSnowInfo(true)
-          } else if (isNear(swallowRef.current)) {
+          } else if (nearestId === 'swallow') {
             setShowSwallowInfo(true)
-          } else if (isNear(droppedLetterRef.current)) {
+          } else if (nearestId === 'letter') {
             setShowLetterPopup(true)
-          } else if (isNear(mailboxRef.current)) {
+          } else if (nearestId === 'mailbox') {
             setLetterDropped(true)
-          } else if (isNear(boundaryRef.current)) {
+          } else if (nearestId === 'boundary') {
             setShowBoundaryInfo(true)
           }
         }
@@ -564,6 +606,18 @@ function Chapter1({
 
       if (event.key === 'Escape' || event.key.toLowerCase() === 'q') {
         event.preventDefault()
+        if (showBookPopup) {
+          handleBookPopupClose()
+          return
+        }
+        if (showBoundaryInfo) {
+          setShowBoundaryInfo(false)
+          return
+        }
+        if (showLetterPopup) {
+          closeLetterPopup()
+          return
+        }
         onLeave(getSaveProgress())
       }
     }
@@ -572,6 +626,7 @@ function Chapter1({
     return () => window.removeEventListener('keydown', handleHudKeyDown)
   }, [
     getSaveProgress,
+    getNearestInteractionId,
     isDictionaryOpen,
     narration2Done,
     onLeave,
@@ -1020,6 +1075,44 @@ function Chapter1({
     matchFinalStage > 0 || (quizDone && !matchActive),
   ].filter(Boolean).length
 
+  const renderCharacterDialogue = ({
+    speaker,
+    text,
+    onClick,
+    portraitSrc = AHE_DIALOGUE_IMG,
+    zIndex = 85,
+  }: {
+    speaker: string
+    text: string
+    onClick: () => void
+    portraitSrc?: string
+    zIndex?: number
+  }) => (
+    <div
+      className="chapter1-dialog-layer"
+      style={zIndex === 85 ? undefined : { zIndex }}
+      onClick={onClick}
+    >
+      <img
+        src={portraitSrc}
+        alt={speaker}
+        className="chapter1-dialog-portrait"
+        draggable={false}
+      />
+      <section
+        className="chapter1-dialog-box"
+        role="dialog"
+        aria-label={`${speaker}对话`}
+      >
+        <div className="chapter1-dialog-name">{speaker}</div>
+        <p className="chapter1-dialog-text" key={text}>{text}</p>
+      </section>
+      <div className="chapter1-dialog-controls">
+        E / 点击继续 | Q / ESC 返回
+      </div>
+    </div>
+  )
+
   return (
     <div className="chapter1">
       {/* 加载中 */}
@@ -1046,75 +1139,75 @@ function Chapter1({
             draggable={false}
           />
 
-          {/* 石碑装饰 */}
+          {/* 石碑装饰 — 仅 E 键交互 */}
           <img
             ref={boundaryRef}
             src="/assets/FirstLevel/boundary.png"
             alt="石碑"
-            className={`chapter1-boundary${isNearBoundary ? ' boundary-near' : ''}`}
+            className={`chapter1-boundary${nearestInteractionId === 'boundary' ? ' boundary-near' : ''}`}
             draggable={false}
-            onClick={() => setShowBoundaryInfo(true)}
           />
 
-          {/* 信箱装饰 */}
+          {/* 信箱装饰 — 仅 E 键交互 */}
           <img
             ref={mailboxRef}
             src="/assets/FirstLevel/letter.png"
             alt="信箱"
-            className={`chapter1-mailbox${letterDropped ? ' mailbox-open' : ''}${isNearMailbox ? ' mailbox-near' : ''}`}
+            className={`chapter1-mailbox${letterDropped ? ' mailbox-open' : ''}${nearestInteractionId === 'mailbox' ? ' mailbox-near' : ''}`}
             draggable={false}
-            onClick={() => setLetterDropped(true)}
           />
 
-          {/* 燕子 */}
+          {/* 燕子 — 仅 E 键交互 */}
           <img
             ref={swallowRef}
             src="/assets/FirstLevel/swallow.png"
             alt="燕子"
-            className={`chapter1-swallow${isNearSwallow ? ' swallow-near' : ''}`}
+            className={`chapter1-swallow${nearestInteractionId === 'swallow' ? ' swallow-near' : ''}`}
             draggable={false}
-            onClick={() => {
-              setShowSwallowInfo(true)
-            }}
           />
 
-          {/* 雪人 */}
+          {/* 雪人 — 仅 E 键交互 */}
           <img
             ref={snowRef}
-            src="/assets/FirstLevel/snow.png"
-            alt="雪人"
-            className={`chapter1-snow${isNearSnow ? ' snow-near' : ''}`}
+            src="/assets/FirstLevel/daniang.png"
+            alt="大娘"
+            className={`chapter1-snow${nearestInteractionId === 'snow' ? ' snow-near' : ''}`}
             draggable={false}
-            onClick={() => {
-              setShowSnowInfo(true)
-            }}
           />
 
-          {/* 酒坛 */}
+          {/* 酒坛 — 仅 E 键交互 */}
           <img
             ref={winejarRef}
             src="/assets/FirstLevel/Winejar.png"
             alt="酒坛"
-            className={`chapter1-winejar${isNearWinejar ? ' winejar-near' : ''}`}
+            className={`chapter1-winejar${nearestInteractionId === 'winejar' ? ' winejar-near' : ''}`}
             draggable={false}
-            onClick={() => {
-              setShowWinejarInfo(true)
-            }}
           />
 
           {/* 掉落的信件 — 替代图 */}
           {letterDropped && (
-            <div ref={droppedLetterRef} className={`dropped-letter${isNearDroppedLetter ? ' dropped-letter-near' : ''}`} onClick={() => setShowLetterPopup(true)}>
+            <div ref={droppedLetterRef} className={`dropped-letter${nearestInteractionId === 'letter' ? ' dropped-letter-near' : ''}`}>
               <span className="dropped-letter-icon">&#9993;</span>
             </div>
           )}
         </div>
       )}
 
-      {/* 操作提示 — 全局显示 */}
-      <div className="chapter1-hint">
-        WASD 移动 | E 交互 | Tab 词典 | Q / ESC 返回
-      </div>
+      {!narration2Done && (
+        <div
+          className="chapter1-intro-bg"
+          aria-hidden="true"
+          style={{ backgroundImage: `url(${INTRO_SCENE_BG})` }}
+        />
+      )}
+
+      {narration2Done && (
+        <div className="chapter1-hint">
+          {nearestInteractionId
+            ? `WASD 移动 | E 交互 · ${CHAPTER1_INTERACTION_LABELS[nearestInteractionId]} | Tab 词典 | Q / ESC 返回`
+            : 'WASD 移动 | Tab 词典 | Q / ESC 返回'}
+        </div>
+      )}
 
       {/* HUD — 第二段旁白结束后进入自由探索才显示 */}
       {narration2Done && (
@@ -1168,40 +1261,17 @@ function Chapter1({
             <p className="narration-line" key={narrationIndex}>
               {NARRATION_LINES[narrationIndex]}
             </p>
-            <span className="narration-click-hint">点击继续</span>
+            <span className="narration-click-hint">E / 点击继续</span>
           </div>
         </div>
       )}
 
       {/* 对话 — 旁白结束后显示 */}
-      {dialogActive && !dialogFinished && (
-        <div className="dialog-overlay" onClick={handleDialogClick}>
-          {/* 阿禾立绘 */}
-          <img
-            src="/assets/FirstLevel/AHe.png"
-            alt="阿禾"
-            className="dialog-portrait"
-          />
-
-          <div className="dialog-box">
-            {/* 名字行 */}
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">{DIALOG_LINES[dialogIndex].speaker}</span>
-              {DIALOG_LINES[dialogIndex].speaker === '阿禾' && (
-                <span className="dialog-flower">&#10047;</span>
-              )}
-            </div>
-
-            {/* 对话文本 */}
-            <p className="dialog-text" key={dialogIndex}>
-              {DIALOG_LINES[dialogIndex].text}
-            </p>
-
-            {/* 继续提示 */}
-            <span className="dialog-next-icon">&#9660;</span>
-          </div>
-        </div>
-      )}
+      {dialogActive && !dialogFinished && renderCharacterDialogue({
+        speaker: DIALOG_LINES[dialogIndex].speaker,
+        text: DIALOG_LINES[dialogIndex].text,
+        onClick: handleDialogClick,
+      })}
 
       {/* 第二段旁白 — 对话结束后显示 */}
       {narration2Active && !narration2Done && (
@@ -1210,116 +1280,75 @@ function Chapter1({
             <p className="narration-line" key={narration2Index}>
               {NARRATION2_LINES[narration2Index]}
             </p>
-            <span className="narration-click-hint">点击继续</span>
+            <span className="narration-click-hint">E / 点击继续</span>
           </div>
         </div>
       )}
 
       {/* 三朝书弹窗 — 对话中阿禾展示三朝书时触发 */}
       {showBookPopup && (
-        <div className="book-popup-overlay" onClick={handleBookPopupClose}>
-          <div className="book-popup" onClick={(e) => e.stopPropagation()}>
-            <button className="book-popup-close" onClick={handleBookPopupClose}>
-              关闭
-            </button>
-            <div className="book-popup-content">
-              <img
-                src="/assets/FirstLevel/sanchaoshu.png"
-                alt="三朝书"
-                className="book-placeholder-img"
-              />
-            </div>
+        <div className="chapter1-object-preview-overlay" onClick={handleBookPopupClose}>
+          <div className="chapter1-object-preview-stage">
+            <img
+              src="/assets/FirstLevel/sanchaoshu.png"
+              alt="三朝书"
+              className="chapter1-object-preview-image chapter1-object-preview-book"
+            />
+          </div>
+          <div className="chapter1-object-preview-hint">
+            E / 点击 继续 | Q / ESC 返回
           </div>
         </div>
       )}
 
       {/* 燕子信息弹窗 */}
-      {showSwallowInfo && (
-        <div className="dialog-overlay" onClick={() => setShowSwallowInfo(false)}>
-          <img
-            src="/assets/FirstLevel/AHe.png"
-            alt="阿禾"
-            className="dialog-portrait"
-          />
-          <div className="dialog-box">
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">阿禾</span>
-            </div>
-            <p className="dialog-text">
-              一只燕子停在柳枝上，旁边系了一根红色的丝带。这个丝带让我回想起了它的形状。
-            </p>
-            <span className="dialog-next-icon">&#9660;</span>
-          </div>
-        </div>
-      )}
+      {showSwallowInfo && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '一只燕子停在柳枝上，旁边系了一根红色的丝带。这个丝带让我回想起了它的形状。',
+        onClick: () => setShowSwallowInfo(false),
+      })}
 
       {/* 雪人信息弹窗 */}
-      {showSnowInfo && (
-        <div className="dialog-overlay" onClick={() => setShowSnowInfo(false)}>
-          <div className="dialog-box">
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">老伯</span>
-            </div>
-            <p className="dialog-text">
-              明明已经过了2月，但这化雪的寒气，还是把手都冻僵了，天气真冷啊，要是有一阵暖风就好了
-            </p>
-            <span className="dialog-next-icon">&#9660;</span>
-          </div>
-        </div>
-      )}
+      {showSnowInfo && renderCharacterDialogue({
+        speaker: '大娘',
+        text: '明明已经过了2月，但这化雪的寒气，还是把手都冻僵了，天气真冷啊，要是有一阵暖风就好了',
+        onClick: () => setShowSnowInfo(false),
+        portraitSrc: DANIANG_DIALOGUE_IMG,
+      })}
 
       {/* 酒坛信息弹窗 */}
-      {showWinejarInfo && (
-        <div className="dialog-overlay" onClick={() => setShowWinejarInfo(false)}>
-          <img
-            src="/assets/FirstLevel/AHe.png"
-            alt="阿禾"
-            className="dialog-portrait"
-          />
-          <div className="dialog-box">
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">阿禾</span>
-            </div>
-            <p className="dialog-text">
-              这是一坛纯酒，上面似乎还有一些字，料峭X风吹酒醒，看起来像是一首诗。
-            </p>
-            <span className="dialog-next-icon">&#9660;</span>
-          </div>
-        </div>
-      )}
+      {showWinejarInfo && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '这是一坛纯酒，上面似乎还有一些字，料峭X风吹酒醒，看起来像是一首诗。',
+        onClick: () => setShowWinejarInfo(false),
+      })}
 
       {/* 石碑信息弹窗 */}
       {showBoundaryInfo && (
-        <div className="boundary-overlay" onClick={() => setShowBoundaryInfo(false)}>
-          <div className="boundary-popup" onClick={(e) => e.stopPropagation()}>
-            <button className="boundary-close" onClick={() => setShowBoundaryInfo(false)}>
-              关闭
-            </button>
-
-            <div className="boundary-content">
+        <div className="chapter1-object-preview-overlay" onClick={() => setShowBoundaryInfo(false)}>
+          <div className="chapter1-object-preview-stage">
+            <div className="chapter1-object-preview-card">
               <img
                 src="/assets/FirstLevel/location.png"
                 alt="江永县"
-                className="boundary-location-img"
+                className="chapter1-object-preview-location"
               />
-
-              <p className="boundary-text">
+              <p className="chapter1-object-preview-text">
                 江永县位于湖南省南部，隶属永州市，地处湘桂交界一带，拥有"女书文化"、"中国香柚之乡"的称号，古称永明，秦时立县，历史悠久。
               </p>
             </div>
+          </div>
+          <div className="chapter1-object-preview-hint">
+            E / 点击 返回主场景 | Q / ESC 返回
           </div>
         </div>
       )}
 
       {/* 信件内容弹窗 */}
       {showLetterPopup && (
-        <div className="letter-popup-overlay" onClick={closeLetterPopup}>
-          <div className="letter-popup" onClick={(e) => e.stopPropagation()}>
-            <button className="letter-popup-close" onClick={closeLetterPopup}>
-              关闭
-            </button>
-
-            <div className="letter-popup-content">
+        <div className="chapter1-object-preview-overlay" onClick={closeLetterPopup}>
+          <div className="chapter1-object-preview-stage">
+            <div className="chapter1-object-preview-letter">
               <p className="letter-text">
                 亲爱的姐妹：<br />
                 <span className="letter-text-indent">
@@ -1342,31 +1371,20 @@ function Chapter1({
               </p>
             </div>
           </div>
+          <div className="chapter1-object-preview-hint">
+            E / 点击 继续 | Q / ESC 返回
+          </div>
         </div>
       )}
 
       {/* ===== Quiz 流程 ===== */}
 
       {/* Quiz 图片弹窗 — 阿禾说话 */}
-      {quizImageOpen && quizImageStep === 0 && (
-        <div className="dialog-overlay" onClick={closeQuizImage}>
-          <img
-            src="/assets/FirstLevel/AHe.png"
-            alt="阿禾"
-            className="dialog-portrait"
-          />
-          <div className="dialog-box">
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">阿禾</span>
-              <span className="dialog-flower">&#10047;</span>
-            </div>
-            <p className="dialog-text">
-              {quizQuestion === 1 ? QUIZ_Q1_DIALOG : QUIZ_Q2_DIALOG}
-            </p>
-            <span className="dialog-next-icon">&#9660;</span>
-          </div>
-        </div>
-      )}
+      {quizImageOpen && quizImageStep === 0 && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: quizQuestion === 1 ? QUIZ_Q1_DIALOG : QUIZ_Q2_DIALOG,
+        onClick: closeQuizImage,
+      })}
 
       {/* Quiz 图片弹窗 — Q1 单图 */}
       {quizImageOpen && quizImageStep === 1 && quizQuestion === 1 && (
@@ -1433,27 +1451,13 @@ function Chapter1({
       )}
 
       {/* Quiz 反馈 — 阿禾回应（统一对话界面） */}
-      {quizFeedback !== null && (
-        <div className="dialog-overlay" onClick={closeQuizFeedback}>
-          <img
-            src="/assets/FirstLevel/AHe.png"
-            alt="阿禾"
-            className="dialog-portrait"
-          />
-          <div className="dialog-box">
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">阿禾</span>
-              <span className="dialog-flower">&#10047;</span>
-            </div>
-            <p className="dialog-text">
-              {quizFeedback === 'correct'
-                ? '嗯，也许您是对的'
-                : getQuizWrongFeedback(quizQuestion, quizLastChoice)}
-            </p>
-            <span className="dialog-next-icon">&#9660;</span>
-          </div>
-        </div>
-      )}
+      {quizFeedback !== null && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: quizFeedback === 'correct'
+          ? '嗯，也许您是对的'
+          : getQuizWrongFeedback(quizQuestion, quizLastChoice),
+        onClick: closeQuizFeedback,
+      })}
 
       {/* Quiz 旁白 — 错误后提示重新思考 */}
       {quizNarrationOpen && (
@@ -1462,52 +1466,27 @@ function Chapter1({
             <p className="narration-line">
               一般来讲，信的语法是怎样的呢？
             </p>
-            <span className="narration-click-hint">点击继续</span>
+            <span className="narration-click-hint">E / 点击继续</span>
           </div>
         </div>
       )}
 
       {/* Q3 阿禾提示 — 引导玩家去探索场景（在匹配题上方） */}
-      {showQ3Hint && (
-        <div className="dialog-overlay" style={{ zIndex: 105 }} onClick={closeQ3Hint}>
-          <img
-            src="/assets/FirstLevel/AHe.png"
-            alt="阿禾"
-            className="dialog-portrait"
-          />
-          <div className="dialog-box">
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">阿禾</span>
-              <span className="dialog-flower">&#10047;</span>
-            </div>
-            <p className="dialog-text">
-              如果你觉得困难，周围的环境应该还有其他的线索
-            </p>
-            <span className="dialog-next-icon">&#9660;</span>
-          </div>
-        </div>
-      )}
+      {showQ3Hint && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '如果你觉得困难，周围的环境应该还有其他的线索',
+        onClick: closeQ3Hint,
+        zIndex: 105,
+      })}
 
       {/* ===== Q3 匹配游戏 ===== */}
 
       {/* Q3 阿禾说话 */}
-      {matchActive && matchStep === 0 && (
-        <div className="dialog-overlay" onClick={advanceMatchStep}>
-          <img
-            src="/assets/FirstLevel/AHe.png"
-            alt="阿禾"
-            className="dialog-portrait"
-          />
-          <div className="dialog-box">
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">阿禾</span>
-              <span className="dialog-flower">&#10047;</span>
-            </div>
-            <p className="dialog-text">{QUIZ_Q3_DIALOG}</p>
-            <span className="dialog-next-icon">&#9660;</span>
-          </div>
-        </div>
-      )}
+      {matchActive && matchStep === 0 && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: QUIZ_Q3_DIALOG,
+        onClick: advanceMatchStep,
+      })}
 
       {/* Q3 匹配界面 */}
       {matchActive && matchStep === 1 && (
@@ -1589,82 +1568,38 @@ function Chapter1({
       )}
 
       {/* Q3 阿禾补充对话 — 放置词条后弹出 */}
-      {matchCommentary !== null && (
-        <div className="dialog-overlay" style={{ zIndex: 105 }} onClick={closeMatchCommentary}>
-          <img
-            src="/assets/FirstLevel/AHe.png"
-            alt="阿禾"
-            className="dialog-portrait"
-          />
-          <div className="dialog-box">
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">阿禾</span>
-              <span className="dialog-flower">&#10047;</span>
-            </div>
-            <p className="dialog-text">{MATCH_COMMENTARY[matchCommentary] || '……'}</p>
-            <span className="dialog-next-icon">&#9660;</span>
-          </div>
-        </div>
-      )}
+      {matchCommentary !== null && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: MATCH_COMMENTARY[matchCommentary] || '……',
+        onClick: closeMatchCommentary,
+        zIndex: 105,
+      })}
 
       {/* Q3 分类完成对话 — 某分类正确集齐 */}
-      {matchCatCommentary !== null && (
-        <div className="dialog-overlay" style={{ zIndex: 106 }} onClick={closeMatchCatCommentary}>
-          <img
-            src="/assets/FirstLevel/AHe.png"
-            alt="阿禾"
-            className="dialog-portrait"
-          />
-          <div className="dialog-box">
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">阿禾</span>
-              <span className="dialog-flower">&#10047;</span>
-            </div>
-            <p className="dialog-text">{CATEGORY_COMPLETION[matchCatCommentary]?.commentary || ''}</p>
-            <span className="dialog-next-icon">&#9660;</span>
-          </div>
-        </div>
-      )}
+      {matchCatCommentary !== null && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: CATEGORY_COMPLETION[matchCatCommentary]?.commentary || '',
+        onClick: closeMatchCatCommentary,
+        zIndex: 106,
+      })}
 
       {/* Q3 全错重置对话 */}
-      {matchAllWrong && (
-        <div className="dialog-overlay" style={{ zIndex: 106 }} onClick={closeMatchAllWrong}>
-          <img
-            src="/assets/FirstLevel/AHe.png"
-            alt="阿禾"
-            className="dialog-portrait"
-          />
-          <div className="dialog-box">
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">阿禾</span>
-              <span className="dialog-flower">&#10047;</span>
-            </div>
-            <p className="dialog-text">好像不太对，再试试吧</p>
-            <span className="dialog-next-icon">&#9660;</span>
-          </div>
-        </div>
-      )}
+      {matchAllWrong && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '好像不太对，再试试吧',
+        onClick: closeMatchAllWrong,
+        zIndex: 106,
+      })}
 
       {/* ===== Q4 最终问答 ===== */}
 
       {/* Q4 阿禾提问 */}
-      {matchFinalStage === 1 && (
-        <div className="dialog-overlay" style={{ zIndex: 107 }} onClick={advanceQ4ToImages}>
-          <img
-            src="/assets/FirstLevel/AHe.png"
-            alt="阿禾"
-            className="dialog-portrait"
-          />
-          <div className="dialog-box">
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">阿禾</span>
-              <span className="dialog-flower">&#10047;</span>
-            </div>
-            <p className="dialog-text">{QUIZ_Q4_DIALOG}</p>
-            <span className="dialog-next-icon">&#9660;</span>
-          </div>
-        </div>
-      )}
+      {matchFinalStage === 1 && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: QUIZ_Q4_DIALOG,
+        onClick: advanceQ4ToImages,
+        zIndex: 107,
+      })}
 
       {/* Q4 展示两张图片 */}
       {matchFinalStage === 2 && (
@@ -1706,46 +1641,22 @@ function Chapter1({
       )}
 
       {/* Q4 反馈 */}
-      {matchFinalFeedback !== null && (
-        <div className="dialog-overlay" style={{ zIndex: 108 }} onClick={closeQ4Feedback}>
-          <img
-            src="/assets/FirstLevel/AHe.png"
-            alt="阿禾"
-            className="dialog-portrait"
-          />
-          <div className="dialog-box">
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">阿禾</span>
-              <span className="dialog-flower">&#10047;</span>
-            </div>
-            <p className="dialog-text">
-              {matchFinalFeedback === 'correct'
-                ? '嗯，确实是这个'
-                : '嗯，我觉得不太对'}
-            </p>
-            <span className="dialog-next-icon">&#9660;</span>
-          </div>
-        </div>
-      )}
+      {matchFinalFeedback !== null && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: matchFinalFeedback === 'correct'
+          ? '嗯，确实是这个'
+          : '嗯，我觉得不太对',
+        onClick: closeQ4Feedback,
+        zIndex: 108,
+      })}
 
       {/* Q3 过渡对话：答对"春风"后，阿禾说"去女红房" */}
-      {matchQ3Transition && (
-        <div className="dialog-overlay" style={{ zIndex: 108 }} onClick={closeQ3Transition}>
-          <img
-            src="/assets/FirstLevel/AHe.png"
-            alt="阿禾"
-            className="dialog-portrait"
-          />
-          <div className="dialog-box">
-            <div className="dialog-name-row">
-              <span className="dialog-speaker">阿禾</span>
-              <span className="dialog-flower">&#10047;</span>
-            </div>
-            <p className="dialog-text">接下来让我们去女红房看看吧，那里说不定有线索</p>
-            <span className="dialog-next-icon">&#9660;</span>
-          </div>
-        </div>
-      )}
+      {matchQ3Transition && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '接下来让我们去女红房看看吧，那里说不定有线索',
+        onClick: closeQ3Transition,
+        zIndex: 108,
+      })}
 
       {/* 获得新字形提示 */}
       {glyphToast && (
@@ -1760,3 +1671,4 @@ function Chapter1({
 }
 
 export default Chapter1
+

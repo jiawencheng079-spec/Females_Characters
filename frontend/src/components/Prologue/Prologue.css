@@ -33,96 +33,78 @@
   pointer-events: none;
 }
 
-.prologue-dialogue {
-  position: absolute;
-  left: 50%;
-  bottom: 25px;
-  z-index: 2;
-  width: min(88vw, 1500px);
-  height: 300px;
-  padding: 0;
-  color: #f1f1ee;
-  cursor: pointer;
-  transform: translateX(-50%);
-}
-
-.prologue-dialogue::before {
-  content: '';
-  position: absolute;
+.prologue-narration-overlay {
+  position: fixed;
   inset: 0;
-  background-image: url('/assets/ui/dialogue-box.png');
-  background-position: center;
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  opacity: 0.8;
-  pointer-events: none;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 12vh;
+  background: rgba(10, 6, 2, 0.55);
+  cursor: pointer;
+  animation: prologueFadeIn 0.6s ease;
 }
 
-.prologue-dialogue-text {
-  position: absolute;
-  left: calc(50% - 390px);
-  top: 91px;
-  width: 790px;
-  margin: 0;
-  color: #f1f1ee;
-  font-family: 'SimSun', 'Microsoft YaHei', serif;
-  font-size: 29px;
-  line-height: 48px;
-  letter-spacing: 0;
-  text-shadow: none;
-}
-
-.prologue-controls-hint {
-  position: absolute;
-  left: 50%;
-  bottom: 24px;
-  z-index: 3;
-  color: #4d3b34;
-  background-color: rgba(244, 226, 191, 0.82);
-  padding: 7px 14px;
-  font-size: 22px;
-  line-height: normal;
+.prologue-narration-box {
+  width: calc(100vw - clamp(32px, 8vw, 120px));
+  max-width: none;
   text-align: center;
-  transform: translateX(-50%);
-  pointer-events: none;
 }
 
-@media (max-width: 900px) {
-  .prologue-dialogue {
-    width: 94vw;
-  }
+.prologue-narration-line {
+  margin: 0;
+  color: #f5efdf;
+  font-family: 'STKaiti', 'KaiTi', 'SimSun', serif;
+  font-size: clamp(1.15rem, 3.5vw, 1.5rem);
+  line-height: 2;
+  letter-spacing: 0.15em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  animation: prologueNarrationIn 0.4s ease;
+}
 
-  .prologue-dialogue-text {
-    left: 12%;
-    width: 76%;
+.prologue-narration-click-hint {
+  display: inline-block;
+  margin-top: 2em;
+  color: rgba(245, 239, 223, 0.45);
+  font-family: 'STKaiti', 'KaiTi', 'SimSun', serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  animation: prologueHintPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes prologueFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes prologueNarrationIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes prologueHintPulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.85;
   }
 }
 
 @media (max-width: 560px) {
-  .prologue-dialogue-text {
-    top: 82px;
-    font-size: 22px;
-    line-height: 40px;
-  }
-
-  .prologue-controls-hint {
-    font-size: 16px;
-  }
-}
-
-@media (max-height: 560px) {
-  .prologue-dialogue {
-    bottom: 16px;
-    height: 240px;
-  }
-
-  .prologue-dialogue-text {
-    top: 72px;
-    font-size: 24px;
-    line-height: 40px;
-  }
-
-  .prologue-controls-hint {
-    bottom: 15px;
+  .prologue-narration-line {
+    font-size: 1.08rem;
+    letter-spacing: 0.1em;
   }
 }
