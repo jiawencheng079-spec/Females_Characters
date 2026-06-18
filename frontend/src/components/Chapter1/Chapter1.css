@@ -700,9 +700,10 @@
 }
 
 .letter-clue-img {
-  display: block;
+  display: inline;
   height: 3em;
   width: auto;
+  vertical-align: middle;
   border: 1px solid #d4c4a8;
   border-radius: 2px;
   background: #fff;
