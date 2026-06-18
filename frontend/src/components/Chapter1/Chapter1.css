@@ -473,9 +473,10 @@
 .chapter1-dialog-portrait {
   position: absolute;
   left: 50%;
-  bottom: -72vh;
+  bottom: -50vh;
   z-index: 1;
   width: auto;
+  max-width: 55vw;
   height: min(210vh, 2050px);
   object-fit: contain;
   object-position: bottom center;
