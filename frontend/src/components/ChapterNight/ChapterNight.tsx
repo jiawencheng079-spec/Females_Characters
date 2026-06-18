@@ -37,7 +37,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
     if (!titleDone) return
     const lines =
       unlockedEntryCount < 5
-        ? ['夜已深了，还有一些词语没有破解，让我们继续加油吧']
+        ? ['夜已深了，还有一些词语没有破解，让我们继续加油吧', '其他地方的线索好像漏掉了一些']
         : [
             '已经到深夜了呢，今天真是辛苦您了，可惜我们还剩下两个字没有解开',
             '下雨了呢，淅淅沥沥的',
@@ -47,19 +47,22 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
             '你有答案了吗？',
           ]
     nightDialogueLinesRef.current = lines
+    rainEnabledRef.current = unlockedEntryCount >= 5
     setNightDialogueStep(0)
   }, [titleDone, unlockedEntryCount])
 
   // 雨声先导延迟标记（防止延迟期间误触跳过）
   const rainDelayRef = useRef(false)
+  // 是否启用雨声（仅线索达标时启用完整对话流程）
+  const rainEnabledRef = useRef(false)
 
   // 阿禾说完第一条对话后开始下雨 + 1.5s 雨声先导
   const advanceNightDialogue = () => {
     if (nightDialogueStep < 0) return
     if (rainDelayRef.current) return // 雨声先导期间阻塞输入
 
-    // 完整对话中，推进第一条后先播雨声，延迟再出阿禾的话
-    if (nightDialogueStep === 0 && nightDialogueLinesRef.current.length > 1 && !showRain) {
+    // 完整对话（线索达标）中，推进第一条后先播雨声，延迟再出阿禾的话
+    if (nightDialogueStep === 0 && rainEnabledRef.current && !showRain) {
       setShowRain(true)
       rainDelayRef.current = true
       setNightDialogueStep(-1) // 暂时隐藏对话框
