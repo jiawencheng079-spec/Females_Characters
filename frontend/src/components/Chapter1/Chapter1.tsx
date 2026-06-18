@@ -8,7 +8,6 @@ const MOVE_SPEED = 400 // 像素/秒，与 Phaser 场景对齐
 const SCENE_SCALE = 2
 
 const SCENE_IMG = '/assets/FirstLevel/mainscene.png'
-const INTRO_SCENE_BG = '/assets/FirstLevel/jiangyong_intro_bg.png'
 const AHE_DIALOGUE_IMG = '/assets/FirstLevel/ahe-dialogue.png'
 const DANIANG_DIALOGUE_IMG = '/assets/FirstLevel/daniang.png'
 const CHAPTER1_INTERACT_DISTANCE = 150
@@ -20,6 +19,7 @@ type Chapter1InteractionId =
   | 'swallow'
   | 'snow'
   | 'winejar'
+  | 'label'
 
 const CHAPTER1_INTERACTION_LABELS: Record<Chapter1InteractionId, string> = {
   boundary: '石碑',
@@ -28,6 +28,7 @@ const CHAPTER1_INTERACTION_LABELS: Record<Chapter1InteractionId, string> = {
   swallow: '燕子',
   snow: '大娘',
   winejar: '酒坛',
+  label: '标签',
 }
 
 /** 开场旁白，逐句展示 */
@@ -161,6 +162,7 @@ function Chapter1({
   const [imgReady, setImgReady] = useState(false)
   const [showBoundaryInfo, setShowBoundaryInfo] = useState(false)
   const [letterDropped, setLetterDropped] = useState(false)
+  const [letterDropAnimDone, setLetterDropAnimDone] = useState(false)
   const [showLetterPopup, setShowLetterPopup] = useState(false)
   // 玩家靠近可交互物体时，只高亮最近的一个目标
   const [nearestInteractionId, setNearestInteractionId] = useState<Chapter1InteractionId | null>(null)
@@ -168,12 +170,14 @@ function Chapter1({
   const [showSwallowInfo, setShowSwallowInfo] = useState(false)
   const [showSnowInfo, setShowSnowInfo] = useState(false)
   const [showWinejarInfo, setShowWinejarInfo] = useState(false)
+  const [showLabelInfo, setShowLabelInfo] = useState(false)
   const boundaryRef = useRef<HTMLImageElement>(null)
   const mailboxRef = useRef<HTMLImageElement>(null)
   const droppedLetterRef = useRef<HTMLDivElement>(null)
   const swallowRef = useRef<HTMLImageElement>(null)
   const snowRef = useRef<HTMLImageElement>(null)
   const winejarRef = useRef<HTMLImageElement>(null)
+  const labelRef = useRef<HTMLImageElement>(null)
   const [showBookPopup, setShowBookPopup] = useState(false)
   const [bookPopupShown, setBookPopupShown] = useState(false)
   const [narrationIndex, setNarrationIndex] = useState(0)
@@ -184,6 +188,8 @@ function Chapter1({
   const [narration2Index, setNarration2Index] = useState(0)
   const [narration2Active, setNarration2Active] = useState(false)
   const [narration2Done, setNarration2Done] = useState(false)
+  // 自由探索教程（narration2 结束后自动触发）
+  const [tutorialPhase, setTutorialPhase] = useState<'none' | 'ahe-dialogue' | 'narration' | 'done'>('none')
   // Quiz 状态
   const [quizActive, setQuizActive] = useState(false)
   const [quizQuestion, setQuizQuestion] = useState(1) // 当前题目序号 1/2
@@ -196,6 +202,8 @@ function Chapter1({
   const [quizLetterMode, setQuizLetterMode] = useState(false)
   const [quizDone, setQuizDone] = useState(false)
   const [quizDismissed, setQuizDismissed] = useState(false) // Q1/Q2 关闭后是否可重开
+  const [quizQ1Done, setQuizQ1Done] = useState(false) // Q1 已正确完成，等待 label 触发 Q2
+  const [labelStep, setLabelStep] = useState(0) // label 多段对话步骤 0-3
   // Q3 匹配游戏
   const [matchActive, setMatchActive] = useState(false)
   const [matchStep, setMatchStep] = useState(0) // 0=阿禾说话, 1=匹配界面
@@ -232,6 +240,7 @@ function Chapter1({
       { id: 'letter', el: droppedLetterRef.current, enabled: letterDropped },
       { id: 'mailbox', el: mailboxRef.current, enabled: !letterDropped },
       { id: 'boundary', el: boundaryRef.current, enabled: true },
+      { id: 'label', el: labelRef.current, enabled: true },
     ]
 
     let nearestId: Chapter1InteractionId | null = null
@@ -311,7 +320,7 @@ function Chapter1({
 
   // 动画帧 — WASD 平移（旁白/对话/弹窗期间暂停）
   useEffect(() => {
-    if (!imgReady || isDictionaryOpen || showBoundaryInfo || showLetterPopup || showSwallowInfo || showSnowInfo || showWinejarInfo || showBookPopup || isQuizBusy || !narrationDone || (dialogActive && !dialogFinished) || (narration2Active && !narration2Done)) return
+    if (!imgReady || isDictionaryOpen || showBoundaryInfo || showLetterPopup || showSwallowInfo || showSnowInfo || showWinejarInfo || showBookPopup || isQuizBusy || !narrationDone || (dialogActive && !dialogFinished) || (narration2Active && !narration2Done) || tutorialPhase !== 'done') return
 
     let lastTime = performance.now()
     const clamp = (v: number, min: number, max: number) =>
@@ -381,7 +390,7 @@ function Chapter1({
 
     animRef.current = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(animRef.current)
-  }, [imgReady, maxX, maxY, isDictionaryOpen, showBoundaryInfo, showLetterPopup, showSwallowInfo, showSnowInfo, showWinejarInfo, showBookPopup, isQuizBusy, narrationDone, dialogActive, dialogFinished, narration2Active, narration2Done, sceneW, sceneH, getNearestInteractionId])
+  }, [imgReady, maxX, maxY, isDictionaryOpen, showBoundaryInfo, showLetterPopup, showSwallowInfo, showSnowInfo, showWinejarInfo, showLabelInfo, showBookPopup, isQuizBusy, narrationDone, dialogActive, dialogFinished, narration2Active, narration2Done, tutorialPhase, sceneW, sceneH, getNearestInteractionId])
 
   // 图片加载后把初始位置对齐 Phaser 场景的出生点
   useEffect(() => {
@@ -422,6 +431,7 @@ function Chapter1({
     narrationDone,
     quizActive,
     quizDone,
+    tutorialPhase,
   ])
 
   useEffect(() => {
@@ -450,6 +460,7 @@ function Chapter1({
         if (showSnowInfo) { setShowSnowInfo(false); return }
         if (showWinejarInfo) { setShowWinejarInfo(false); return }
         if (showBookPopup) { handleBookPopupClose(); return }
+        if (showLabelInfo) { setShowLabelInfo(false); setLabelStep(0); return }
 
         return
       }
@@ -530,6 +541,11 @@ function Chapter1({
           closeLetterPopup()
           return
         }
+        if (showLabelInfo) {
+          event.preventDefault()
+          advanceLabelDialogue()
+          return
+        }
         if (isQuizBusy) return
         event.preventDefault()
 
@@ -563,12 +579,25 @@ function Chapter1({
             setNarration2Index((i) => i + 1)
           } else {
             setNarration2Done(true)
+            setTutorialPhase('ahe-dialogue')
           }
           return
         }
 
+        // 3.5 自由探索教程 — 阿禾对话
+        if (tutorialPhase === 'ahe-dialogue') {
+          setTutorialPhase('narration')
+          return
+        }
+
+        // 3.6 自由探索教程 — 操作提示旁白
+        if (tutorialPhase === 'narration') {
+          setTutorialPhase('done')
+          return
+        }
+
         // 4. 自由探索阶段 — 触发最近的可交互物体
-        if (narration2Done && !showBoundaryInfo && !showLetterPopup) {
+        if (narration2Done && !showBoundaryInfo && !showLetterPopup && !showLabelInfo) {
           const screenDx = playerWorldRef.current.x - cameraRef.current.x
           const screenDy = playerWorldRef.current.y - cameraRef.current.y
           const playerX = vpRef.current.w / 2 + screenDx
@@ -588,15 +617,19 @@ function Chapter1({
             setShowLetterPopup(true)
           } else if (nearestId === 'mailbox') {
             setLetterDropped(true)
+            setLetterDropAnimDone(false) // 触发下落动画
           } else if (nearestId === 'boundary') {
             setShowBoundaryInfo(true)
+          } else if (nearestId === 'label') {
+            setShowLabelInfo(true)
+            setLabelStep(0)
           }
         }
         return
       }
 
       // ========== 探索阶段专属按键 ==========
-      if (!narration2Done) return
+      if (!narration2Done || tutorialPhase !== 'done') return
 
       if (event.key === 'Tab') {
         event.preventDefault()
@@ -659,6 +692,8 @@ function Chapter1({
     matchQ3Transition,
     showQ3Hint,
     matchEverStarted,
+    showLabelInfo,
+    labelStep,
   ])
 
   // 恢复存档进度：快进到对应阶段
@@ -678,15 +713,18 @@ function Chapter1({
     if (resumeProgress >= ProgressStage.QUIZ) {
       setNarration2Done(true)
       setNarration2Active(false)
+      setTutorialPhase('done')
     }
     if (resumeProgress >= ProgressStage.MATCH_Q3) {
       setQuizDone(true)
       setQuizActive(false)
+      setQuizQ1Done(true)
     }
     if (resumeProgress >= ProgressStage.IN_MATCH) {
       // 直接打开匹配游戏
       setQuizDone(true)
       setQuizActive(false)
+      setQuizQ1Done(true)
       setMatchActive(true)
       setMatchStep(1)
     }
@@ -730,7 +768,25 @@ function Chapter1({
       setNarration2Index((i) => i + 1)
     } else {
       setNarration2Done(true)
+      setTutorialPhase('ahe-dialogue')
     }
+  }
+
+  // 自由探索教程：narration2 结束后自动触发阿禾对话
+  useEffect(() => {
+    if (narration2Done && tutorialPhase === 'none') {
+      setTutorialPhase('ahe-dialogue')
+    }
+  }, [narration2Done, tutorialPhase])
+
+  // 教程阿禾对话点击
+  const handleTutorialAheClick = () => {
+    setTutorialPhase('narration')
+  }
+
+  // 教程旁白点击
+  const handleTutorialNarrationClick = () => {
+    setTutorialPhase('done')
   }
 
   // 关闭信件弹窗 — 首次关闭触发 Quiz，Quiz 内错误后关闭则继续流程
@@ -739,7 +795,7 @@ function Chapter1({
     if (quizLetterMode) {
       setQuizLetterMode(false)
       setQuizNarrationOpen(true)
-    } else if (!quizActive && !quizDone && !quizDismissed) {
+    } else if (!quizActive && !quizDone && !quizDismissed && !quizQ1Done) {
       startQuizImage(1)
     }
   }
@@ -821,7 +877,9 @@ function Chapter1({
     setQuizFeedback(null)
     if (isCorrect) {
       if (quizQuestion === 1) {
-        startQuizImage(2)
+        // Q1 正确 → 不再自动触发 Q2，等玩家探索 label 时触发
+        setQuizQ1Done(true)
+        setQuizActive(false)
       } else {
         // Q2 正确 → 阿禾发言 → 匹配题界面 → 阿禾提示
         setQuizActive(false)
@@ -839,6 +897,17 @@ function Chapter1({
       // Q2 错误：重新展示四张图，看完后再选
       setQuizImageOpen(true)
       setQuizImageStep(1)
+    }
+  }
+
+  // label 多段对话推进 → 最后一步触发 Q2
+  const advanceLabelDialogue = () => {
+    if (labelStep < 3) {
+      setLabelStep((s) => s + 1)
+    } else {
+      setShowLabelInfo(false)
+      setLabelStep(0)
+      startQuizImage(2)
     }
   }
 
@@ -1081,12 +1150,14 @@ function Chapter1({
     onClick,
     portraitSrc = AHE_DIALOGUE_IMG,
     zIndex = 85,
+    children,
   }: {
     speaker: string
-    text: string
+    text?: string
     onClick: () => void
     portraitSrc?: string
     zIndex?: number
+    children?: React.ReactNode
   }) => (
     <div
       className="chapter1-dialog-layer"
@@ -1105,7 +1176,11 @@ function Chapter1({
         aria-label={`${speaker}对话`}
       >
         <div className="chapter1-dialog-name">{speaker}</div>
-        <p className="chapter1-dialog-text" key={text}>{text}</p>
+        {children ? (
+          <div className="chapter1-dialog-text">{children}</div>
+        ) : text ? (
+          <p className="chapter1-dialog-text" key={text}>{text}</p>
+        ) : null}
       </section>
       <div className="chapter1-dialog-controls">
         E / 点击继续 | Q / ESC 返回
@@ -1184,24 +1259,31 @@ function Chapter1({
             draggable={false}
           />
 
+          {/* 标签 — 仅 E 键交互 */}
+          <img
+            ref={labelRef}
+            src="/assets/FirstLevel/label.png"
+            alt="标签"
+            className={`chapter1-label${nearestInteractionId === 'label' ? ' label-near' : ''}`}
+            draggable={false}
+          />
+
           {/* 掉落的信件 — 替代图 */}
           {letterDropped && (
-            <div ref={droppedLetterRef} className={`dropped-letter${nearestInteractionId === 'letter' ? ' dropped-letter-near' : ''}`}>
+            <div
+              ref={droppedLetterRef}
+              className={`dropped-letter${!letterDropAnimDone ? ' letter-drop-anim' : ''}${nearestInteractionId === 'letter' ? ' dropped-letter-near' : ''}`}
+              onAnimationEnd={() => setLetterDropAnimDone(true)}
+            >
               <img src="/assets/FirstLevel/envelope.png" alt="信件" className="dropped-letter-img" />
             </div>
           )}
         </div>
       )}
 
-      {!narration2Done && (
-        <div
-          className="chapter1-intro-bg"
-          aria-hidden="true"
-          style={{ backgroundImage: `url(${INTRO_SCENE_BG})` }}
-        />
-      )}
 
-      {narration2Done && (
+
+      {narration2Done && tutorialPhase === 'done' && (
         <div className="chapter1-hint">
           {nearestInteractionId
             ? `WASD 移动 | E 交互 · ${CHAPTER1_INTERACTION_LABELS[nearestInteractionId]} | Tab 词典 | Q / ESC 返回`
@@ -1209,8 +1291,8 @@ function Chapter1({
         </div>
       )}
 
-      {/* HUD — 第二段旁白结束后进入自由探索才显示 */}
-      {narration2Done && (
+      {/* HUD — 教程结束后进入自由探索才显示 */}
+      {narration2Done && tutorialPhase === 'done' && (
         <>
           <button
             className="chapter1-dictionary-btn"
@@ -1285,6 +1367,25 @@ function Chapter1({
         </div>
       )}
 
+      {/* 自由探索教程 — 阿禾对话 */}
+      {tutorialPhase === 'ahe-dialogue' && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '让我们先来看看门口这个信箱吧。',
+        onClick: handleTutorialAheClick,
+      })}
+
+      {/* 自由探索教程 — 操作提示旁白 */}
+      {tutorialPhase === 'narration' && (
+        <div className="narration-overlay" onClick={handleTutorialNarrationClick}>
+          <div className="narration-box">
+            <p className="narration-line">
+              请使用 WSAD 控制小红球瞄准信箱，然后按 E 进行交互。
+            </p>
+            <span className="narration-click-hint">E / 点击继续</span>
+          </div>
+        </div>
+      )}
+
       {/* 三朝书弹窗 — 对话中阿禾展示三朝书时触发 */}
       {showBookPopup && (
         <div className="chapter1-object-preview-overlay" onClick={handleBookPopupClose}>
@@ -1321,6 +1422,39 @@ function Chapter1({
         speaker: '阿禾',
         text: '这是一坛纯酒，上面似乎还有一些字，料峭X风吹酒醒，看起来像是一首诗。',
         onClick: () => setShowWinejarInfo(false),
+      })}
+
+      {/* 标签多段对话 — 最后一段触发 Q2 */}
+      {showLabelInfo && labelStep === 0 && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '这棵树下，以前有人挂小木牌。',
+        onClick: advanceLabelDialogue,
+      })}
+      {showLabelInfo && labelStep === 1 && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '不是为了求什么大事，只是怕有些人、有些话，被日子冲走。',
+        onClick: advanceLabelDialogue,
+      })}
+      {showLabelInfo && labelStep === 2 && renderCharacterDialogue({
+        speaker: '阿禾',
+        onClick: advanceLabelDialogue,
+        children: (
+          <>
+            写下来，挂在这里，就是想让人
+            <img
+              src="/assets/FirstLevel/remember1.png"
+              alt="记"
+              className="chapter1-dialog-inline-img"
+              draggable={false}
+            />
+            得。
+          </>
+        ),
+      })}
+      {showLabelInfo && labelStep === 3 && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '这四个字，我知道分别是忘记和记得的意思，可是到底谁是谁呢？',
+        onClick: advanceLabelDialogue,
       })}
 
       {/* 石碑信息弹窗 */}
