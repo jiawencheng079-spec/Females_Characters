@@ -116,6 +116,8 @@ export class EmbroideryRoomPhaserScene extends Phaser.Scene {
 
   private interactHint!: Phaser.GameObjects.Container
   private interactHintText!: Phaser.GameObjects.Text
+  private interactHintGlyphContent!: Phaser.GameObjects.Container
+  private renderedInteractHintId?: string
   private clueProgressText!: Phaser.GameObjects.Text
   private controlsText!: Phaser.GameObjects.Text
   private dictionaryButton!: Phaser.GameObjects.Image
@@ -569,9 +571,12 @@ export class EmbroideryRoomPhaserScene extends Phaser.Scene {
       fontFamily: '"SimSun", "Microsoft YaHei", serif',
     })
     this.interactHintText.setOrigin(0.5)
+    this.interactHintGlyphContent = this.add.container(0, 0)
+    this.interactHintGlyphContent.setVisible(false)
     this.interactHint = this.add.container(width / 2, height - 105, [
       hintBackground,
       this.interactHintText,
+      this.interactHintGlyphContent,
     ])
     this.interactHint.setDepth(65).setScrollFactor(0).setVisible(false)
 
@@ -918,8 +923,83 @@ export class EmbroideryRoomPhaserScene extends Phaser.Scene {
     })
 
     if (nearest) {
-      this.interactHintText.setText(this.getInteractionHintText(nearest))
+      if (this.renderedInteractHintId !== nearest.id) {
+        this.renderInteractionHint(nearest)
+        this.renderedInteractHintId = nearest.id
+      }
+    } else {
+      this.renderedInteractHintId = undefined
     }
+  }
+
+  private renderInteractionHint(interaction: EmbroideryInteraction): void {
+    this.interactHintGlyphContent.removeAll(true)
+
+    const nushuTextureKeys =
+      this.getInteractionHintNushuTextureKeys(interaction)
+
+    if (!nushuTextureKeys) {
+      this.interactHintGlyphContent.setVisible(false)
+      this.interactHintText
+        .setText(this.getInteractionHintText(interaction))
+        .setOrigin(0.5)
+        .setPosition(0, 0)
+      return
+    }
+
+    this.interactHintText
+      .setText('E 交互 ·')
+      .setOrigin(0, 0.5)
+
+    const glyphGap = 2
+    const glyphTextGap = 14
+    const glyphHeight = 57.6
+    let glyphX = 0
+
+    nushuTextureKeys.forEach((sourceTextureKey) => {
+      const textureKey = this.getDialogueGlyphTextureKey(sourceTextureKey)
+      const renderTextureKey = this.textures.exists(textureKey)
+        ? textureKey
+        : sourceTextureKey
+      const sourceImage = this.textures.get(renderTextureKey).source[0]?.image
+      const sourceWidth =
+        sourceImage && 'width' in sourceImage ? Number(sourceImage.width) : 52
+      const sourceHeight =
+        sourceImage && 'height' in sourceImage
+          ? Number(sourceImage.height)
+          : 82
+      const glyphWidth = glyphHeight * (sourceWidth / sourceHeight)
+
+      const glyph = this.add.image(glyphX, 0, renderTextureKey)
+      glyph
+        .setDisplaySize(glyphWidth, glyphHeight)
+        .setOrigin(0, 0.5)
+      this.interactHintGlyphContent.add(glyph)
+      glyphX += glyphWidth + glyphGap
+    })
+
+    const totalGlyphWidth = Math.max(glyphX - glyphGap, 1)
+    const totalWidth =
+      this.interactHintText.width + glyphTextGap + totalGlyphWidth
+    const startX = -totalWidth / 2
+
+    this.interactHintText.setPosition(startX, 0)
+    this.interactHintGlyphContent
+      .setPosition(startX + this.interactHintText.width + glyphTextGap, 0)
+      .setVisible(true)
+  }
+
+  private getInteractionHintNushuTextureKeys(
+    interaction: EmbroideryInteraction,
+  ): readonly string[] | undefined {
+    if (
+      interaction.category === 'npc' ||
+      !NUSHU_INTERACTION_LABEL_IDS.has(interaction.id)
+    ) {
+      return undefined
+    }
+
+    return interaction.unlock?.nushuTextureKeys
   }
 
   private getInteractionHintText(interaction: EmbroideryInteraction): string {

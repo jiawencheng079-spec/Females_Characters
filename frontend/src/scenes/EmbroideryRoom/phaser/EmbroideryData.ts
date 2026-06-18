@@ -312,9 +312,9 @@ export const EMBROIDERY_INTERACTIONS: EmbroideryInteraction[] = [
       },
       {
         display: 'culture',
-        title: '一边女红，一边读字',
+        title: '一边针线，一边读字',
         text: [
-          '女红篮里放着针线、布料，也放着日常里的许多声音。',
+          '篮子里放着针线、布料，也放着日常里的许多声音。',
           '从前女性常一边做针线，一边听人读字、唱歌、讲故事。',
           '字不是只在书桌前学会的，也是在一针一线之间慢慢记下来的。',
         ].join('\n'),

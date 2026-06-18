@@ -139,6 +139,7 @@ interface Chapter1Props {
   isDictionaryOpen: boolean
   openDictionary: () => void
   unlockEntry: (entryId: string) => void
+  placedSlots: Record<string, string>
   onLeave: (progress: ProgressStage) => void
   onProgressChange: (progress: ProgressStage) => void
   onComplete: () => void
@@ -149,6 +150,7 @@ function Chapter1({
   isDictionaryOpen,
   openDictionary,
   unlockEntry,
+  placedSlots,
   onLeave,
   onProgressChange,
   onComplete,
@@ -203,10 +205,23 @@ function Chapter1({
   const [quizDone, setQuizDone] = useState(false)
   const [quizDismissed, setQuizDismissed] = useState(false) // Q1/Q2 关闭后是否可重开
   const [quizQ1Done, setQuizQ1Done] = useState(false) // Q1 已正确完成，等待 label 触发 Q2
+  const [quizQ2Done, setQuizQ2Done] = useState(false) // Q2 已正确完成，防止 label 重复触发
   const [labelStep, setLabelStep] = useState(0) // label 多段对话步骤 0-3
+  // 线索发现追踪 — 7 个可交互对象
+  const [clueFoundIds, setClueFoundIds] = useState<Set<string>>(new Set())
+  const markClueFound = useCallback((id: string) => {
+    setClueFoundIds((prev) => {
+      if (prev.has(id)) return prev
+      return new Set([...prev, id])
+    })
+  }, [])
+  const [postQ1DialogueStep, setPostQ1DialogueStep] = useState(-1) // Q1正确后额外对话：-1=未激活, 0=阿禾, 1=旁白
+  const [guideDictDone, setGuideDictDone] = useState(false) // 新手引导字典匹配已完成
+  const [guideDictDismissed, setGuideDictDismissed] = useState(false) // 台词是否已关闭
+  const placedSlotCountAtStartRef = useRef(Object.keys(placedSlots).length) // 进入引导时已放置的槽位数
   // Q3 匹配游戏
   const [matchActive, setMatchActive] = useState(false)
-  const [matchStep, setMatchStep] = useState(0) // 0=阿禾说话, 1=匹配界面
+  const [matchStep, setMatchStep] = useState(0) // 0=阿禾说话, 1=阿禾提示, 2=匹配界面
   const [matchPlacements, setMatchPlacements] = useState<Record<string, string>>({})
   const [draggingItem, setDraggingItem] = useState<string | null>(null)
   const [dragOverCat, setDragOverCat] = useState<string | null>(null)
@@ -218,29 +233,29 @@ function Chapter1({
   const [matchFinalFeedback, setMatchFinalFeedback] = useState<string | null>(null) // Q4 反馈
   const [matchEverStarted, setMatchEverStarted] = useState(false) // Q3 是否已启动过
   const [matchQ3Transition, setMatchQ3Transition] = useState(false) // Q3 全部正确 → 过渡对话"去女红房"
-  const [showQ3Hint, setShowQ3Hint] = useState(false) // Q3 前旁白提示
   // 获得新字形提示
   const [glyphToast, setGlyphToast] = useState<string | null>(null)
   const glyphToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Quiz 相关弹窗是否开启（用于暂停 WASD）
-  const isQuizBusy = showQ3Hint || matchQ3Transition || matchFinalStage > 0 || matchAllWrong || matchCatCommentary !== null || matchCommentary !== null || matchActive || quizImageOpen || quizChoicesOpen || quizFeedback !== null || quizNarrationOpen || quizActive
+  const isQuizBusy = matchQ3Transition || matchFinalStage > 0 || matchAllWrong || matchCatCommentary !== null || matchCommentary !== null || matchActive || quizImageOpen || quizChoicesOpen || quizFeedback !== null || quizNarrationOpen || quizActive
   const keysRef = useRef<Set<string>>(new Set())
   const animRef = useRef<number>(0)
   const vpRef = useRef({ w: window.innerWidth, h: window.innerHeight })
 
   const getNearestInteractionId = useCallback((playerX: number, playerY: number): Chapter1InteractionId | null => {
+    const tutorialDone = guideDictDone && guideDictDismissed
     const interactions: Array<{
       id: Chapter1InteractionId
       el: HTMLElement | null
       enabled: boolean
     }> = [
-      { id: 'winejar', el: winejarRef.current, enabled: true },
-      { id: 'snow', el: snowRef.current, enabled: true },
-      { id: 'swallow', el: swallowRef.current, enabled: true },
+      { id: 'winejar', el: winejarRef.current, enabled: tutorialDone },
+      { id: 'snow', el: snowRef.current, enabled: tutorialDone },
+      { id: 'swallow', el: swallowRef.current, enabled: tutorialDone },
       { id: 'letter', el: droppedLetterRef.current, enabled: letterDropped },
       { id: 'mailbox', el: mailboxRef.current, enabled: !letterDropped },
-      { id: 'boundary', el: boundaryRef.current, enabled: true },
-      { id: 'label', el: labelRef.current, enabled: true },
+      { id: 'boundary', el: boundaryRef.current, enabled: tutorialDone },
+      { id: 'label', el: labelRef.current, enabled: tutorialDone },
     ]
 
     let nearestId: Chapter1InteractionId | null = null
@@ -259,7 +274,7 @@ function Chapter1({
     })
 
     return nearestId
-  }, [letterDropped])
+  }, [letterDropped, guideDictDone, guideDictDismissed])
 
   // 预加载图片
   useEffect(() => {
@@ -320,7 +335,7 @@ function Chapter1({
 
   // 动画帧 — WASD 平移（旁白/对话/弹窗期间暂停）
   useEffect(() => {
-    if (!imgReady || isDictionaryOpen || showBoundaryInfo || showLetterPopup || showSwallowInfo || showSnowInfo || showWinejarInfo || showBookPopup || isQuizBusy || !narrationDone || (dialogActive && !dialogFinished) || (narration2Active && !narration2Done) || tutorialPhase !== 'done') return
+    if (!imgReady || isDictionaryOpen || showBoundaryInfo || showLetterPopup || showSwallowInfo || showSnowInfo || showWinejarInfo || showBookPopup || isQuizBusy || !narrationDone || (dialogActive && !dialogFinished) || (narration2Active && !narration2Done) || tutorialPhase !== 'done' || postQ1DialogueStep >= 0 || (guideDictDone && !guideDictDismissed)) return
 
     let lastTime = performance.now()
     const clamp = (v: number, min: number, max: number) =>
@@ -390,7 +405,7 @@ function Chapter1({
 
     animRef.current = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(animRef.current)
-  }, [imgReady, maxX, maxY, isDictionaryOpen, showBoundaryInfo, showLetterPopup, showSwallowInfo, showSnowInfo, showWinejarInfo, showLabelInfo, showBookPopup, isQuizBusy, narrationDone, dialogActive, dialogFinished, narration2Active, narration2Done, tutorialPhase, sceneW, sceneH, getNearestInteractionId])
+  }, [imgReady, maxX, maxY, isDictionaryOpen, showBoundaryInfo, showLetterPopup, showSwallowInfo, showSnowInfo, showWinejarInfo, showLabelInfo, showBookPopup, isQuizBusy, narrationDone, dialogActive, dialogFinished, narration2Active, narration2Done, tutorialPhase, postQ1DialogueStep, guideDictDone, guideDictDismissed, sceneW, sceneH, getNearestInteractionId])
 
   // 图片加载后把初始位置对齐 Phaser 场景的出生点
   useEffect(() => {
@@ -438,6 +453,34 @@ function Chapter1({
     onProgressChange(getSaveProgress())
   }, [getSaveProgress, onProgressChange])
 
+  // 新手引导：监测玩家在 post-Q1 后打开字典完成匹配并关闭
+  const prevDictOpenRef = useRef(false)
+  useEffect(() => {
+    if (guideDictDone) return
+    // 仅在 post-Q1 对话已结束、Q1已完成 的阶段才监听
+    if (!quizQ1Done || postQ1DialogueStep >= 0) {
+      prevDictOpenRef.current = isDictionaryOpen
+      return
+    }
+    const placedCount = Object.keys(placedSlots).length
+    // 字典从打开→关闭 且 有新的放置
+    if (prevDictOpenRef.current && !isDictionaryOpen && placedCount > placedSlotCountAtStartRef.current) {
+      setGuideDictDone(true)
+    }
+    prevDictOpenRef.current = isDictionaryOpen
+  }, [isDictionaryOpen, quizQ1Done, postQ1DialogueStep, placedSlots, guideDictDone])
+
+  // Tab 键捕获阶段拦截 — 教程/Q1 完成前禁止切换焦点
+  useEffect(() => {
+    const captureTab = (e: KeyboardEvent) => {
+      if (e.key === 'Tab' && (!narration2Done || tutorialPhase !== 'done' || !quizQ1Done)) {
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('keydown', captureTab, true) // capture phase, 最早拦截
+    return () => window.removeEventListener('keydown', captureTab, true)
+  }, [narration2Done, tutorialPhase, quizQ1Done])
+
   useEffect(() => {
     const handleHudKeyDown = (event: KeyboardEvent) => {
       if (isDictionaryOpen) return
@@ -446,14 +489,14 @@ function Chapter1({
       if (event.key === 'Escape' || event.key.toLowerCase() === 'q') {
         event.preventDefault()
 
-        if (showQ3Hint) { closeQ3Hint(); return }
         if (quizFeedback !== null) { closeQuizFeedback(); return }
         if (matchQ3Transition) { closeQ3Transition(); return }
         if (matchFinalFeedback !== null) { closeQ4Feedback(); return }
         if (matchAllWrong) { closeMatchAllWrong(); return }
         if (matchCommentary !== null) { closeMatchCommentary(); return }
         if (matchCatCommentary !== null) { closeMatchCatCommentary(); return }
-        if (matchActive && matchStep === 1) { closeMatchGame(); return }
+        if (matchActive && matchStep <= 1) { advanceMatchStep(); return }
+        if (matchActive && matchStep === 2) { closeMatchGame(); return }
         if (showBoundaryInfo) { setShowBoundaryInfo(false); return }
         if (showLetterPopup) { closeLetterPopup(); return }
         if (showSwallowInfo) { setShowSwallowInfo(false); return }
@@ -461,17 +504,13 @@ function Chapter1({
         if (showWinejarInfo) { setShowWinejarInfo(false); return }
         if (showBookPopup) { handleBookPopupClose(); return }
         if (showLabelInfo) { setShowLabelInfo(false); setLabelStep(0); return }
+        if (postQ1DialogueStep >= 0) { setPostQ1DialogueStep(-1); setQuizQ1Done(true); return }
+        if (guideDictDone && !guideDictDismissed) { setGuideDictDismissed(true); return }
 
         return
       }
       // ========== E 键 — 全局推进对话/旁白/探索 ==========
       if (event.key === 'e' || event.key === 'E') {
-        // Q3 阿禾提示 → 关闭提示（匹配题保持开启）
-        if (showQ3Hint) {
-          event.preventDefault()
-          closeQ3Hint()
-          return
-        }
         // Q1/Q2：反馈（正确/错误）的 阿禾回应 → 关闭
         if (quizFeedback !== null) {
           event.preventDefault()
@@ -508,8 +547,8 @@ function Chapter1({
           closeMatchAllWrong()
           return
         }
-        // Q3 匹配：阿禾说话 → 推进到匹配界面
-        if (matchActive && matchStep === 0) {
+        // Q3 匹配：阿禾说话 / 阿禾提示 → 推进
+        if (matchActive && matchStep <= 1) {
           event.preventDefault()
           advanceMatchStep()
           return
@@ -541,9 +580,34 @@ function Chapter1({
           closeLetterPopup()
           return
         }
+        if (showSwallowInfo) {
+          event.preventDefault()
+          setShowSwallowInfo(false)
+          return
+        }
+        if (showSnowInfo) {
+          event.preventDefault()
+          setShowSnowInfo(false)
+          return
+        }
+        if (showWinejarInfo) {
+          event.preventDefault()
+          setShowWinejarInfo(false)
+          return
+        }
         if (showLabelInfo) {
           event.preventDefault()
           advanceLabelDialogue()
+          return
+        }
+        if (postQ1DialogueStep >= 0) {
+          event.preventDefault()
+          advancePostQ1Dialogue()
+          return
+        }
+        if (guideDictDone && !guideDictDismissed) {
+          event.preventDefault()
+          setGuideDictDismissed(true)
           return
         }
         if (isQuizBusy) return
@@ -608,19 +672,27 @@ function Chapter1({
           setNearestInteractionId(nearestId)
 
           if (nearestId === 'winejar') {
+            markClueFound('winejar')
             setShowWinejarInfo(true)
           } else if (nearestId === 'snow') {
+            markClueFound('snow')
             setShowSnowInfo(true)
           } else if (nearestId === 'swallow') {
+            markClueFound('swallow')
             setShowSwallowInfo(true)
           } else if (nearestId === 'letter') {
+            markClueFound('letter')
             setShowLetterPopup(true)
           } else if (nearestId === 'mailbox') {
+            markClueFound('mailbox')
             setLetterDropped(true)
             setLetterDropAnimDone(false) // 触发下落动画
           } else if (nearestId === 'boundary') {
+            markClueFound('boundary')
             setShowBoundaryInfo(true)
           } else if (nearestId === 'label') {
+            if (quizQ2Done) return // Q2 已完成，禁止重复触发
+            markClueFound('label')
             setShowLabelInfo(true)
             setLabelStep(0)
           }
@@ -629,13 +701,15 @@ function Chapter1({
       }
 
       // ========== 探索阶段专属按键 ==========
-      if (!narration2Done || tutorialPhase !== 'done') return
-
+      // Tab 键：教程阶段和 Q1 结束前完全禁用
       if (event.key === 'Tab') {
-        event.preventDefault()
+        event.preventDefault() // 阻止浏览器默认焦点切换
+        if (!narration2Done || tutorialPhase !== 'done' || !quizQ1Done) return // 旁白提示"按 Tab"前禁止打开字典
         openDictionary()
         return
       }
+
+      if (!narration2Done || tutorialPhase !== 'done') return
 
       if (event.key === 'Escape' || event.key.toLowerCase() === 'q') {
         event.preventDefault()
@@ -690,11 +764,24 @@ function Chapter1({
     matchFinalStage,
     matchFinalFeedback,
     matchQ3Transition,
-    showQ3Hint,
     matchEverStarted,
     showLabelInfo,
     labelStep,
+    postQ1DialogueStep,
+    guideDictDone,
+    guideDictDismissed,
+    tutorialPhase,
+    quizQ1Done,
   ])
+
+  // 若已有字典放置记录（存档恢复），跳过引导对话
+  useEffect(() => {
+    if (Object.keys(placedSlots).length > 0) {
+      setGuideDictDone(true)
+      setGuideDictDismissed(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // 恢复存档进度：快进到对应阶段
   useEffect(() => {
@@ -719,14 +806,16 @@ function Chapter1({
       setQuizDone(true)
       setQuizActive(false)
       setQuizQ1Done(true)
+      setQuizQ2Done(true)
     }
     if (resumeProgress >= ProgressStage.IN_MATCH) {
       // 直接打开匹配游戏
       setQuizDone(true)
       setQuizActive(false)
       setQuizQ1Done(true)
+      setQuizQ2Done(true)
       setMatchActive(true)
-      setMatchStep(1)
+      setMatchStep(2)
     }
     // IN_Q4 / DONE 难以精确恢复，从匹配游戏开始即可
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -827,11 +916,11 @@ function Chapter1({
   }
 
   // 开始 Quiz 图片阶段
-  const startQuizImage = (q: number) => {
+  const startQuizImage = (q: number, initialStep = 0) => {
     setQuizQuestion(q)
     setQuizActive(true)
     setQuizImageOpen(true)
-    setQuizImageStep(0)
+    setQuizImageStep(initialStep)
   }
 
   // 显示"获得新字形"提示
@@ -877,12 +966,13 @@ function Chapter1({
     setQuizFeedback(null)
     if (isCorrect) {
       if (quizQuestion === 1) {
-        // Q1 正确 → 不再自动触发 Q2，等玩家探索 label 时触发
-        setQuizQ1Done(true)
+        // Q1 正确 → 阿禾对话 + 字典教程旁白 → 最后 setQuizQ1Done
         setQuizActive(false)
+        setPostQ1DialogueStep(0)
       } else {
         // Q2 正确 → 阿禾发言 → 匹配题界面 → 阿禾提示
         setQuizActive(false)
+        setQuizQ2Done(true)
         setMatchEverStarted(true)
         setMatchPlacements({})
         setMatchCategoryDone(new Set())
@@ -900,6 +990,16 @@ function Chapter1({
     }
   }
 
+  // Q1 正确后的额外对话推进：阿禾 → 旁白 → 完成
+  const advancePostQ1Dialogue = () => {
+    if (postQ1DialogueStep === 0) {
+      setPostQ1DialogueStep(1) // 进入旁白
+    } else {
+      setPostQ1DialogueStep(-1)
+      setQuizQ1Done(true)
+    }
+  }
+
   // label 多段对话推进 → 最后一步触发 Q2
   const advanceLabelDialogue = () => {
     if (labelStep < 3) {
@@ -907,7 +1007,7 @@ function Chapter1({
     } else {
       setShowLabelInfo(false)
       setLabelStep(0)
-      startQuizImage(2)
+      startQuizImage(2, 1) // 跳过 step 0 阿禾对话，因为 labelStep 3 已说过
     }
   }
 
@@ -917,14 +1017,13 @@ function Chapter1({
     setQuizChoicesOpen(true)
   }
 
-  // 关闭 Q3 阿禾提示 → 只关闭提示，保持匹配题开启
-  const closeQ3Hint = () => {
-    setShowQ3Hint(false)
-  }
-
-  // Q3 匹配游戏 — 阿禾说完话 → 展示匹配界面
+  // Q3 匹配游戏 — 阿禾说完话 → 提示 → 匹配界面
   const advanceMatchStep = () => {
     if (matchStep === 0) {
+      // 展示提示对话
+      setMatchStep(1)
+    } else if (matchStep === 1) {
+      // 展示匹配界面
       setMatchPlacements({})
       setDraggingItem(null)
       setDragOverCat(null)
@@ -935,9 +1034,7 @@ function Chapter1({
       setMatchFinalStage(0)
       setMatchFinalFeedback(null)
       setMatchQ3Transition(false)
-      setMatchStep(1)
-      // 匹配界面展示后，阿禾给出探索提示
-      setShowQ3Hint(true)
+      setMatchStep(2)
     }
   }
 
@@ -1121,7 +1218,7 @@ function Chapter1({
   // 重新打开Q3匹配游戏（恢复之前已拖拽的词条）
   const reopenMatchGame = () => {
     setMatchActive(true)
-    setMatchStep(1)
+    setMatchStep(2)
     setDraggingItem(null)
     setDragOverCat(null)
     setMatchCommentary(null)
@@ -1132,17 +1229,10 @@ function Chapter1({
     setMatchQ3Transition(false)
   }
 
-  const clueFoundCount = [
-    bookPopupShown ||
-      letterDropped ||
-      showLetterPopup ||
-      quizActive ||
-      quizDone ||
-      matchActive ||
-      matchFinalStage > 0,
-    matchActive || matchFinalStage > 0 || quizDone,
-    matchFinalStage > 0 || (quizDone && !matchActive),
-  ].filter(Boolean).length
+  // 线索计数：玩家交互过的线索数，达到 7/7 的完成条件为全部交互或完成 Q3
+  const clueFoundCount = quizDone || matchQ3Transition
+    ? 7
+    : clueFoundIds.size
 
   const renderCharacterDialogue = ({
     speaker,
@@ -1241,14 +1331,16 @@ function Chapter1({
             draggable={false}
           />
 
-          {/* 雪人 — 仅 E 键交互 */}
-          <img
-            ref={snowRef}
-            src="/assets/FirstLevel/daniang.png"
-            alt="大娘"
-            className={`chapter1-snow${nearestInteractionId === 'snow' ? ' snow-near' : ''}`}
-            draggable={false}
-          />
+          {/* 雪人 — 仅 E 键交互，对话时隐藏 */}
+          {!showSnowInfo && (
+            <img
+              ref={snowRef}
+              src="/assets/FirstLevel/daniang.png"
+              alt="大娘"
+              className={`chapter1-snow${nearestInteractionId === 'snow' ? ' snow-near' : ''}`}
+              draggable={false}
+            />
+          )}
 
           {/* 酒坛 — 仅 E 键交互 */}
           <img
@@ -1283,28 +1375,59 @@ function Chapter1({
 
 
 
-      {narration2Done && tutorialPhase === 'done' && (
+      {/* 底部操作指南 — 仅在纯自由探索时显示（无对话/弹窗/Quiz） */}
+      {narration2Done &&
+       tutorialPhase === 'done' &&
+       postQ1DialogueStep < 0 &&
+       !(guideDictDone && !guideDictDismissed) &&
+       !showBoundaryInfo &&
+       !showLetterPopup &&
+       !showSwallowInfo &&
+       !showSnowInfo &&
+       !showWinejarInfo &&
+       !showLabelInfo &&
+       !showBookPopup &&
+       !isQuizBusy && (
         <div className="chapter1-hint">
-          {nearestInteractionId
-            ? `WASD 移动 | E 交互 · ${CHAPTER1_INTERACTION_LABELS[nearestInteractionId]} | Tab 词典 | Q / ESC 返回`
-            : 'WASD 移动 | Tab 词典 | Q / ESC 返回'}
+          WASD 移动 | E 交互{quizQ1Done ? ' | Tab 词典' : ''} | Q / ESC 返回
         </div>
       )}
 
-      {/* HUD — 教程结束后进入自由探索才显示 */}
-      {narration2Done && tutorialPhase === 'done' && (
+      {/* 线索交互提示 — 仅在纯自由探索时显示 */}
+      {narration2Done &&
+       tutorialPhase === 'done' &&
+       postQ1DialogueStep < 0 &&
+       !(guideDictDone && !guideDictDismissed) &&
+       !showBoundaryInfo &&
+       !showLetterPopup &&
+       !showSwallowInfo &&
+       !showSnowInfo &&
+       !showWinejarInfo &&
+       !showLabelInfo &&
+       !showBookPopup &&
+       !isQuizBusy &&
+       nearestInteractionId && (
+        <div className="chapter1-interact-hint">
+          E 交互 · {CHAPTER1_INTERACTION_LABELS[nearestInteractionId]}
+        </div>
+      )}
+
+      {/* HUD — 教程结束后进入自由探索才显示，词典按钮在 Q1 完成后才出现 */}
+      {narration2Done && tutorialPhase === 'done' && postQ1DialogueStep < 0 && !(guideDictDone && !guideDictDismissed) && (
         <>
-          <button
-            className="chapter1-dictionary-btn"
-            type="button"
-            aria-label="打开词典"
-            onClick={openDictionary}
-          >
-            <img src="/assets/ui/open_book_icon.png" alt="" />
-            <span>词典</span>
-          </button>
+          {quizQ1Done && (
+            <button
+              className="chapter1-dictionary-btn"
+              type="button"
+              aria-label="打开词典"
+              onClick={openDictionary}
+            >
+              <img src="/assets/ui/open_book_icon.png" alt="" />
+              <span>词典</span>
+            </button>
+          )}
           <div className="chapter1-clue-progress">
-            线索 {clueFoundCount}/3
+            线索 {clueFoundCount}/7
           </div>
           <div
             className="chapter1-player-marker"
@@ -1484,24 +1607,12 @@ function Chapter1({
           <div className="chapter1-object-preview-stage">
             <div className="chapter1-object-preview-letter">
               <p className="letter-text">
-                亲爱的姐妹：<br />
-                <span className="letter-text-indent">
-                  <span className="letter-image-slot">
-                    <img
-                      src="/assets/FirstLevel/letterclue1.png"
-                      alt="线索图1"
-                      className="letter-clue-img"
-                    />
-                  </span>
-                  <span className="letter-image-slot">
-                    <img
-                      src="/assets/FirstLevel/letterclue2.png"
-                      alt="线索图2"
-                      className="letter-clue-img"
-                    />
-                  </span>
-                  ！XXX...
-                </span>
+                <img
+                  src="/assets/FirstLevel/Q1.png"
+                  alt="Q1"
+                  className="letter-clue-img"
+                />
+                亲启，展信安
               </p>
             </div>
           </div>
@@ -1593,6 +1704,32 @@ function Chapter1({
         onClick: closeQuizFeedback,
       })}
 
+      {/* Q1 正确后 — 阿禾额外对话："你"字放到字典 */}
+      {postQ1DialogueStep === 0 && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '现在让我们将这个字补上吧，将这个字放到您认为合适的位置即可，我想这个\'你\'字应该放在"已为"下面？',
+        onClick: advancePostQ1Dialogue,
+      })}
+
+      {/* Q1 正确后 — 旁白：字典教程 */}
+      {postQ1DialogueStep === 1 && (
+        <div className="narration-overlay" onClick={advancePostQ1Dialogue}>
+          <div className="narration-box">
+            <p className="narration-line">
+              按 Tab 键可以打开词典，将解锁的字拖到字典中的方框中，如果位置正确则完成该字符的破解。
+            </p>
+            <span className="narration-click-hint">E / 点击继续</span>
+          </div>
+        </div>
+      )}
+
+      {/* 新手引导：字典匹配完成后，阿禾总结 */}
+      {guideDictDone && !guideDictDismissed && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '接下来我和您继续寻找其他线索',
+        onClick: () => setGuideDictDismissed(true),
+      })}
+
       {/* Quiz 旁白 — 错误后提示重新思考 */}
       {quizNarrationOpen && (
         <div className="narration-overlay" onClick={closeQuizNarration}>
@@ -1605,11 +1742,11 @@ function Chapter1({
         </div>
       )}
 
-      {/* Q3 阿禾提示 — 引导玩家去探索场景（在匹配题上方） */}
-      {showQ3Hint && renderCharacterDialogue({
+      {/* Q3 阿禾提示 — 引导玩家去探索场景（匹配题之前） */}
+      {matchActive && matchStep === 1 && renderCharacterDialogue({
         speaker: '阿禾',
         text: '如果你觉得困难，周围的环境应该还有其他的线索',
-        onClick: closeQ3Hint,
+        onClick: advanceMatchStep,
         zIndex: 105,
       })}
 
@@ -1623,7 +1760,7 @@ function Chapter1({
       })}
 
       {/* Q3 匹配界面 */}
-      {matchActive && matchStep === 1 && (
+      {matchActive && matchStep === 2 && (
         <div className="match-overlay">
           <div className="match-panel">
             <button className="match-close-btn" onClick={closeMatchGame}>关闭</button>
@@ -1798,6 +1935,17 @@ function Chapter1({
           <span className="glyph-toast-icon">&#10022;</span>
           <span className="glyph-toast-text">获得新字形：{glyphToast} 已加入词典</span>
         </div>
+      )}
+
+      {/* 返回主菜单按钮 */}
+      {narration2Done && tutorialPhase === 'done' && postQ1DialogueStep < 0 && !(guideDictDone && !guideDictDismissed) && (
+        <button
+          className="chapter1-return-btn"
+          type="button"
+          onClick={() => onLeave(getSaveProgress())}
+        >
+          返回主菜单
+        </button>
       )}
 
     </div>

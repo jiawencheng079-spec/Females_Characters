@@ -74,6 +74,13 @@ function EmbroideryRoomPhaser({
   return (
     <section className="singing-hall" aria-label="女红房 Phaser 场景">
       <div className="singing-hall__game" ref={containerRef} />
+      <button
+        className="embroidery-room-return-btn"
+        type="button"
+        onClick={onReturnToMenu}
+      >
+        返回主菜单
+      </button>
     </section>
   )
 }

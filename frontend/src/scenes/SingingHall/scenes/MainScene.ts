@@ -35,8 +35,8 @@ type SingingDictionaryPuzzleConfig = {
   localEntryIds: readonly string[]
 }
 
-const TOAST_GLYPH_HEIGHT = 46;
-const TOAST_GLYPH_GAP = 6;
+const TOAST_GLYPH_HEIGHT = 65;
+const TOAST_GLYPH_GAP = 3;
 const TOAST_PADDING_X = 20;
 const TOAST_HEIGHT = 66;
 
@@ -2527,7 +2527,6 @@ export class MainScene extends Phaser.Scene {
       0x5d2722,
       0.94,
     );
-    background.setStrokeStyle(1, 0xd2b47b, 0.75);
 
     const toast = this.add.container(VIEW_WIDTH / 2, 100, [
       background,
@@ -2587,13 +2586,31 @@ export class MainScene extends Phaser.Scene {
   }
 
   private showToast(text: string): void {
-    const toast = this.add.text(VIEW_WIDTH / 2, 160, text, {
-      fontSize: '32px', color: '#ffffff', backgroundColor: '#000000aa',
-      padding: { x: 40, y: 20 }, fontFamily: 'serif',
-    }).setOrigin(0.5).setDepth(150).setScrollFactor(0);
+    const textObj = this.add.text(0, 0, text, {
+      fontSize: '26px',
+      color: '#f7e8ca',
+      fontFamily: '"SimSun", "Microsoft YaHei", serif',
+    }).setOrigin(0.5).setDepth(150);
+
+    const bgWidth = textObj.width + TOAST_PADDING_X * 2;
+    const bgHeight = TOAST_HEIGHT;
+
+    const background = this.add.rectangle(
+      0,
+      0,
+      bgWidth,
+      bgHeight,
+      0x5d2722,
+      0.94,
+    ).setDepth(149);
+
+    const toast = this.add.container(VIEW_WIDTH / 2, 100, [
+      background,
+      textObj,
+    ]).setDepth(150).setScrollFactor(0);
 
     this.tweens.add({
-      targets: toast, alpha: 0, y: 100, duration: 2000, delay: 1000,
+      targets: toast, alpha: 0, y: 76, duration: 2000, delay: 1000,
       onComplete: () => toast.destroy(),
     });
   }

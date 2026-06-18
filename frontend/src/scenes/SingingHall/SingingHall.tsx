@@ -70,6 +70,13 @@ function SingingHall({
   return (
     <section className="singing-hall" aria-label="坐歌堂 / 歌扇空间">
       <div className="singing-hall__game" ref={containerRef} />
+      <button
+        className="singing-hall-return-btn"
+        type="button"
+        onClick={onReturnToMenu}
+      >
+        返回主菜单
+      </button>
     </section>
   )
 }

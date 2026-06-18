@@ -46,6 +46,14 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
   const rainDelayRef = useRef(false)
   // 是否启用雨声（仅线索达标时启用完整对话流程）
   const rainEnabledRef = useRef(false)
+  // 获得新字形提示
+  const [glyphToast, setGlyphToast] = useState<string | null>(null)
+  const glyphToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const showGlyphToast = (word: string) => {
+    if (glyphToastTimerRef.current) clearTimeout(glyphToastTimerRef.current)
+    setGlyphToast(word)
+    glyphToastTimerRef.current = setTimeout(() => setGlyphToast(null), 2200)
+  }
 
   // titleCard 结束后触发阿禾对话
   useEffect(() => {
@@ -108,6 +116,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
         // 解锁词条「深宵」和「雨声」
         unlockEntry('shenxiao')
         unlockEntry('yusheng')
+        showGlyphToast('深宵、雨声')
         setEndingPhase('poemHint')
       }
     }, 100)
@@ -654,6 +663,14 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
             </div>
           </div>
           <div className="chapter-night-credits-hint">点击任意位置继续</div>
+        </div>
+      )}
+
+      {/* 获得新字形提示（对齐女工房 Phaser Toast 样式） */}
+      {glyphToast && (
+        <div className="chapter-night-glyph-toast" key={glyphToast}>
+          <span className="chapter-night-glyph-toast-icon">&#10022;</span>
+          <span className="chapter-night-glyph-toast-text">获得新字形：{glyphToast} 已加入词典</span>
         </div>
       )}
     </div>
