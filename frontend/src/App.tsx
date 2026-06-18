@@ -277,6 +277,7 @@ function App() {
             openDictionary={dictionary.openDictionary}
             unlockEntry={dictionary.unlockEntry}
             unlockedEntryCount={dictionary.unlockedEntryIds.length}
+            placedSlots={dictionary.placedSlots as Record<string, string>}
           />
         )
     }

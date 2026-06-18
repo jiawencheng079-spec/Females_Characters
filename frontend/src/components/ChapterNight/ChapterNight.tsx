@@ -1,6 +1,7 @@
 ﻿import { useState, useRef, useEffect } from 'react'
 import TitleCard from '../TitleCard/TitleCard'
 import RainPhaserOverlay from './RainPhaserOverlay'
+import type { DictionaryPuzzle } from '../../systems/dictionary/dictionaryData'
 import './ChapterNight.css'
 
 const MOVE_SPEED = 500
@@ -10,12 +11,13 @@ const SCENE_IMG = '/assets/FirstLevel/mainscene.png'
 interface ChapterNightProps {
   onReturnToMenu: () => void
   isDictionaryOpen: boolean
-  openDictionary: () => void
+  openDictionary: (puzzle?: DictionaryPuzzle) => void
   unlockEntry: (entryId: string) => void
   unlockedEntryCount: number
+  placedSlots: Record<string, string>
 }
 
-function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlockEntry: _unlockEntry, unlockedEntryCount }: ChapterNightProps) {
+function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlockEntry, unlockedEntryCount, placedSlots }: ChapterNightProps) {
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const playerWorldRef = useRef({ x: 0, y: 0 })
   const cameraRef = useRef({ x: 0, y: 0 })
@@ -34,9 +36,11 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
   const dialogueStartedRef = useRef(false)
 
   // ── 结尾演出 ──
-  // none → midnightTitle(5s,雨声渐大) → poemHint(3s) → poemReveal(3s) → blackout → credits
-  type EndingPhase = 'none' | 'midnightTitle' | 'poemHint' | 'poemReveal' | 'blackout' | 'credits'
+  // midnightTitle(5s,雨声渐大) → unlock 深宵+雨声 → poemHint(3s) → fillPuzzle(填词) → poemReveal(3s) → blackout → credits
+  type EndingPhase = 'none' | 'midnightTitle' | 'poemHint' | 'fillPuzzle' | 'poemReveal' | 'blackout' | 'credits'
+  type FillPuzzleStep = 'dialogue1' | 'waitingForFill' | 'dialogue2'
   const [endingPhase, setEndingPhase] = useState<EndingPhase>('none')
+  const [fillPuzzleStep, setFillPuzzleStep] = useState<FillPuzzleStep>('dialogue1')
   const [rainVolume, setRainVolume] = useState(0.55)
   const endingTriggeredRef = useRef(false)
   const rainDelayRef = useRef(false)
@@ -86,7 +90,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
     }
   }, [nightDialogueStep])
 
-  // 第二次报幕（midnightTitle）：雨声渐大 5 秒 → 自动切到第三次报幕
+  // 第二次报幕（midnightTitle）：雨声渐大 5 秒 → 解锁词条 → 自动切到第三次报幕
   useEffect(() => {
     if (endingPhase !== 'midnightTitle') return
     const startVol = 0.55
@@ -101,21 +105,51 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
       setRainVolume(vol)
       if (t >= 1) {
         clearInterval(interval)
+        // 解锁词条「深宵」和「雨声」
+        unlockEntry('shenxiao')
+        unlockEntry('yusheng')
         setEndingPhase('poemHint')
       }
     }, 100)
 
     return () => clearInterval(interval)
-  }, [endingPhase])
+  }, [endingPhase, unlockEntry])
 
-  // 第三次报幕第一段（poemHint）：停顿 3 秒 → 自动揭示完整诗句
+  // 第三次报幕第一段（poemHint）：停顿 3 秒 → 先展示阿禾对话，用户交互后再打开词典
   useEffect(() => {
     if (endingPhase !== 'poemHint') return
     const timer = setTimeout(() => {
-      setEndingPhase('poemReveal')
+      setFillPuzzleStep('dialogue1')
+      setEndingPhase('fillPuzzle')
     }, 3000)
     return () => clearTimeout(timer)
   }, [endingPhase])
+
+  // 填词阶段（fillPuzzle）：
+  //   dialogue1 → 阿禾说"看起来你已经有答案了…" → 点击进 waitingForFill
+  //   waitingForFill → 监听 placedSlots，两个槽都填好 → 进 dialogue2
+  //   dialogue2 → 阿禾说"原来是这样…" → 点击进 poemReveal
+  const advanceFillPuzzleDialogue = () => {
+    if (endingPhase !== 'fillPuzzle') return
+    if (fillPuzzleStep === 'dialogue1') {
+      setFillPuzzleStep('waitingForFill')
+      // 用户交互后才打开词典
+      openDictionary()
+    } else if (fillPuzzleStep === 'dialogue2') {
+      setEndingPhase('poemReveal')
+    }
+  }
+
+  // 监听填词进度
+  useEffect(() => {
+    if (endingPhase !== 'fillPuzzle' || fillPuzzleStep !== 'waitingForFill') return
+    const slotsMatch =
+      placedSlots['line-4-deep-night'] === 'shenxiao' &&
+      placedSlots['line-4-rain-sound'] === 'yusheng'
+    if (slotsMatch) {
+      setFillPuzzleStep('dialogue2')
+    }
+  }, [endingPhase, fillPuzzleStep, placedSlots])
 
   // 第三次报幕第二段（poemReveal）：停顿 3 秒 → 自动黑屏
   useEffect(() => {
@@ -154,6 +188,20 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [endingPhase, onReturnToMenu])
+
+  // fillPuzzle 阶段 E 键推进对话
+  useEffect(() => {
+    if (endingPhase !== 'fillPuzzle') return
+    if (fillPuzzleStep === 'waitingForFill') return // 等待填词时不拦截 E 键
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'e' || e.key === 'E') {
+        e.preventDefault()
+        advanceFillPuzzleDialogue()
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [endingPhase, fillPuzzleStep])
 
   const isEnding = endingPhase !== 'none'
 
@@ -489,7 +537,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
         </div>
       )}
 
-      {/* 第三次报幕第一段：千言写尽犹余半，留与XX作XX — 3s 自动过渡 */}
+      {/* 第三次报幕第一段：千言写尽犹余半，留与XX作XX — 3s 自动进入填词 */} 
       {endingPhase === 'poemHint' && (
         <div className="chapter-night-ending chapter-night-ending--locked">
           <div className="chapter-night-ending-bg" />
@@ -499,6 +547,60 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
             </h1>
           </div>
         </div>
+      )}
+
+      {/* 填词阶段：阿禾对话 + 词典拖放 */}
+      {endingPhase === 'fillPuzzle' && (
+        <>
+          {/* 阿禾对话 — dialogue1 */}
+          {fillPuzzleStep === 'dialogue1' && (
+            <div className="chapter-night-dialog-layer" style={{ zIndex: 2000 }} onClick={advanceFillPuzzleDialogue}>
+              <img
+                src="/assets/FirstLevel/ahe-dialogue.png"
+                alt="阿禾"
+                className="chapter-night-dialog-portrait"
+                draggable={false}
+              />
+              <section className="chapter-night-dialog-box" role="dialog" aria-label="阿禾对话">
+                <div className="chapter-night-dialog-name">阿禾</div>
+                <p className="chapter-night-dialog-text">
+                  看起来你已经有答案了，让我们填完最后这两个空吧
+                </p>
+              </section>
+              <div className="chapter-night-dialog-controls">
+                E / 点击继续
+              </div>
+            </div>
+          )}
+
+          {/* 等待填词 — 提示文字 */}
+          {fillPuzzleStep === 'waitingForFill' && (
+            <div className="chapter-night-fill-puzzle-waiting">
+              将词典中的「深宵」与「雨声」拖放到诗句对应位置
+            </div>
+          )}
+
+          {/* 阿禾对话 — dialogue2 */}
+          {fillPuzzleStep === 'dialogue2' && (
+            <div className="chapter-night-dialog-layer" style={{ zIndex: 2000 }} onClick={advanceFillPuzzleDialogue}>
+              <img
+                src="/assets/FirstLevel/ahe-dialogue.png"
+                alt="阿禾"
+                className="chapter-night-dialog-portrait"
+                draggable={false}
+              />
+              <section className="chapter-night-dialog-box" role="dialog" aria-label="阿禾对话">
+                <div className="chapter-night-dialog-name">阿禾</div>
+                <p className="chapter-night-dialog-text">
+                  原来是这样，千言万语写在纸上仍然没有办法写完，就让深夜的雨声替我诉说...
+                </p>
+              </section>
+              <div className="chapter-night-dialog-controls">
+                E / 点击继续
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* 第三次报幕第二段：揭示完整诗句 — 3s 后自动黑屏 */}
