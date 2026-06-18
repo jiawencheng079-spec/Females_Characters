@@ -40,7 +40,189 @@
   filter: brightness(0.35) saturate(0.5) hue-rotate(10deg);
 }
 
-/* ========== 黑夜滤镜遮罩 — 深蓝色半透明覆盖层 ========== */
+/* ========== 结尾演出 ========== */
+.chapter-night-ending {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  overflow: hidden;
+}
+
+.chapter-night-ending--locked {
+  pointer-events: none;
+}
+
+.chapter-night-ending--clickable {
+  cursor: pointer;
+}
+
+.chapter-night-ending-bg {
+  position: absolute;
+  inset: 0;
+  background: url('/assets/main-menu/main_menu_bg.png') center/cover no-repeat;
+  filter: brightness(0.45);
+  opacity: 0;
+  animation: endingBgIn 0.8s ease forwards;
+}
+
+@keyframes endingBgIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.chapter-night-ending-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: endingContentIn 1.2s ease 0.15s forwards;
+}
+
+@keyframes endingContentIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chapter-night-ending-title {
+  font-family: 'STKaiti', 'KaiTi', 'SimSun', serif;
+  font-size: clamp(2.2rem, 6vw, 4.5rem);
+  font-weight: 400;
+  color: #faf6ed;
+  letter-spacing: 0.2em;
+  margin: 0;
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.5),
+    0 0 40px rgba(200, 160, 100, 0.3);
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.chapter-night-ending-char {
+  height: clamp(3.5rem, 9vw, 7rem);
+  width: auto;
+  display: inline-block;
+  vertical-align: middle;
+  margin: 0 2px;
+  filter: drop-shadow(0 3px 10px rgba(0, 0, 0, 0.45));
+}
+
+.chapter-night-ending-title--poem {
+  line-height: 1.8;
+}
+
+/* ========== 黑屏 ========== */
+.chapter-night-blackout {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #000;
+  animation: blackoutIn 2.5s ease forwards;
+}
+
+@keyframes blackoutIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ========== 致谢名单滚动 ========== */
+.chapter-night-credits {
+  position: fixed;
+  inset: 0;
+  z-index: 101;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.chapter-night-credits-scroll {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.chapter-night-credits-content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  top: 100vh;
+  width: min(80vw, 750px);
+  text-align: center;
+  color: #f0e6d2;
+  font-family: 'STKaiti', 'KaiTi', 'SimSun', 'Noto Serif SC', serif;
+  line-height: 2;
+  padding-bottom: 20vh;
+  animation: creditsRoll 50s linear forwards;
+}
+
+@keyframes creditsRoll {
+  from { transform: translateY(0); }
+  to   { transform: translateY(calc(-100% - 100vh)); }
+}
+
+.chapter-night-credits-title {
+  font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+  font-weight: 400;
+  margin: 0 0 1.5em 0;
+  letter-spacing: 0.12em;
+  text-shadow: 0 2px 12px rgba(255, 220, 160, 0.4);
+}
+
+.chapter-night-credits-desc {
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  margin-bottom: 2.5em;
+  opacity: 0.85;
+}
+
+.chapter-night-credits-content h3 {
+  font-size: clamp(1.2rem, 2.4vw, 1.7rem);
+  font-weight: 400;
+  margin: 2.2em 0 0.8em 0;
+  letter-spacing: 0.1em;
+  text-shadow: 0 1px 8px rgba(255, 200, 130, 0.35);
+}
+
+.chapter-night-credits-content p {
+  font-size: clamp(0.95rem, 1.8vw, 1.2rem);
+  margin: 0 0 1.2em 0;
+  opacity: 0.8;
+  text-align: justify;
+  text-indent: 2em;
+}
+
+.chapter-night-credits-hint {
+  position: absolute;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(240, 230, 210, 0.55);
+  font-family: 'STKaiti', 'KaiTi', 'SimSun', serif;
+  font-size: clamp(0.85rem, 1.5vw, 1.1rem);
+  letter-spacing: 0.15em;
+  animation: creditsHintPulse 2.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes creditsHintPulse {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.8; }
+}
 .chapter-night-overlay {
   position: fixed;
   inset: 0;

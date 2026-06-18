@@ -31,6 +31,17 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
   const [nightDialogueStep, setNightDialogueStep] = useState(-1) // -1=不活跃, 0..n=对话步数
   const nightDialogueLinesRef = useRef<string[]>([])
   const [showRain, setShowRain] = useState(false)
+  const dialogueStartedRef = useRef(false)
+
+  // ── 结尾演出 ──
+  // none → midnightTitle(5s,雨声渐大) → poemHint(3s) → poemReveal(3s) → blackout → credits
+  type EndingPhase = 'none' | 'midnightTitle' | 'poemHint' | 'poemReveal' | 'blackout' | 'credits'
+  const [endingPhase, setEndingPhase] = useState<EndingPhase>('none')
+  const [rainVolume, setRainVolume] = useState(0.55)
+  const endingTriggeredRef = useRef(false)
+  const rainDelayRef = useRef(false)
+  // 是否启用雨声（仅线索达标时启用完整对话流程）
+  const rainEnabledRef = useRef(false)
 
   // titleCard 结束后触发阿禾对话
   useEffect(() => {
@@ -51,10 +62,100 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
     setNightDialogueStep(0)
   }, [titleDone, unlockedEntryCount])
 
-  // 雨声先导延迟标记（防止延迟期间误触跳过）
-  const rainDelayRef = useRef(false)
-  // 是否启用雨声（仅线索达标时启用完整对话流程）
-  const rainEnabledRef = useRef(false)
+  // 追踪对话是否已开始
+  useEffect(() => {
+    if (nightDialogueStep >= 0) {
+      dialogueStartedRef.current = true
+    }
+  }, [nightDialogueStep])
+
+  // 完整对话结束后触发结尾演出（雨声延迟期间不算真正结束）
+  useEffect(() => {
+    if (
+      nightDialogueStep === -1 &&
+      dialogueStartedRef.current &&
+      rainEnabledRef.current &&
+      !endingTriggeredRef.current &&
+      !rainDelayRef.current
+    ) {
+      endingTriggeredRef.current = true
+      dialogueStartedRef.current = false
+      setEndingPhase('midnightTitle')
+      setShowRain(true) // 确保雨还在下
+      setRainVolume(0.55)
+    }
+  }, [nightDialogueStep])
+
+  // 第二次报幕（midnightTitle）：雨声渐大 5 秒 → 自动切到第三次报幕
+  useEffect(() => {
+    if (endingPhase !== 'midnightTitle') return
+    const startVol = 0.55
+    const endVol = 1.0
+    const duration = 5000
+    const startTime = Date.now()
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime
+      const t = Math.min(elapsed / duration, 1)
+      const vol = startVol + (endVol - startVol) * t
+      setRainVolume(vol)
+      if (t >= 1) {
+        clearInterval(interval)
+        setEndingPhase('poemHint')
+      }
+    }, 100)
+
+    return () => clearInterval(interval)
+  }, [endingPhase])
+
+  // 第三次报幕第一段（poemHint）：停顿 3 秒 → 自动揭示完整诗句
+  useEffect(() => {
+    if (endingPhase !== 'poemHint') return
+    const timer = setTimeout(() => {
+      setEndingPhase('poemReveal')
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [endingPhase])
+
+  // 第三次报幕第二段（poemReveal）：停顿 3 秒 → 自动黑屏
+  useEffect(() => {
+    if (endingPhase !== 'poemReveal') return
+    const timer = setTimeout(() => {
+      setEndingPhase('blackout')
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [endingPhase])
+
+  // 黑屏后进入致谢名单
+  useEffect(() => {
+    if (endingPhase !== 'blackout') return
+    const timer = setTimeout(() => {
+      setShowRain(false)
+      setEndingPhase('credits')
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [endingPhase])
+
+  // 致谢名单：点击任意位置跳过，返回主菜单
+  const skipCredits = () => {
+    if (endingPhase !== 'credits') return
+    onReturnToMenu()
+  }
+
+  // credits 阶段 E 键跳过
+  useEffect(() => {
+    if (endingPhase !== 'credits') return
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'e' || e.key === 'E' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault()
+        onReturnToMenu()
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [endingPhase, onReturnToMenu])
+
+  const isEnding = endingPhase !== 'none'
 
   // 阿禾说完第一条对话后开始下雨 + 1.5s 雨声先导
   const advanceNightDialogue = () => {
@@ -101,7 +202,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
   // 键盘监听
   useEffect(() => {
     const onDown = (e: KeyboardEvent) => {
-      if (isDictionaryOpen || !titleDone || isNightDialogueActive) return
+      if (isDictionaryOpen || !titleDone || isNightDialogueActive || isEnding) return
       const k = e.key.toLowerCase()
       if (['w', 'a', 's', 'd'].includes(k)) {
         e.preventDefault()
@@ -124,7 +225,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
       window.removeEventListener('keydown', onDown)
       window.removeEventListener('keyup', onUp)
     }
-  }, [isDictionaryOpen, titleDone, isNightDialogueActive])
+  }, [isDictionaryOpen, titleDone, isNightDialogueActive, isEnding])
 
   useEffect(() => {
     if (isDictionaryOpen) keysRef.current.clear()
@@ -133,7 +234,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
   // HUD 按键（Tab 词典 / E 交互 / Q 关闭）
   useEffect(() => {
     const handleHudKeyDown = (event: KeyboardEvent) => {
-      if (isDictionaryOpen || !titleDone) return
+      if (isDictionaryOpen || !titleDone || isEnding) return
 
       // 深夜对话中：E 推进对话
       if (isNightDialogueActive) {
@@ -166,7 +267,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
 
     window.addEventListener('keydown', handleHudKeyDown)
     return () => window.removeEventListener('keydown', handleHudKeyDown)
-  }, [isDictionaryOpen, titleDone, openDictionary, isNightDialogueActive])
+  }, [isDictionaryOpen, titleDone, openDictionary, isNightDialogueActive, isEnding])
 
   // 窗口 resize
   useEffect(() => {
@@ -179,7 +280,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
 
   // 动画帧 — WASD 平移
   useEffect(() => {
-    if (!imgReady || isDictionaryOpen || !titleDone || isNightDialogueActive) return
+    if (!imgReady || isDictionaryOpen || !titleDone || isNightDialogueActive || isEnding) return
 
     let lastTime = performance.now()
     const clamp = (v: number, min: number, max: number) =>
@@ -235,7 +336,7 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
 
     animRef.current = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(animRef.current)
-  }, [imgReady, maxX, maxY, isDictionaryOpen, titleDone, sceneW, sceneH, isNightDialogueActive])
+  }, [imgReady, maxX, maxY, isDictionaryOpen, titleDone, sceneW, sceneH, isNightDialogueActive, isEnding])
 
   // 初始位置：画面右下角
   useEffect(() => {
@@ -292,11 +393,11 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
         <div className="chapter-night-overlay" />
       )}
 
-      {/* 雨滴效果 — Phaser WebGL 渲染，阿禾说完第一条对话后渐入 */}
-      <RainPhaserOverlay active={showRain} />
+      {/* 雨滴效果 — Phaser WebGL 渲染 */}
+      <RainPhaserOverlay active={showRain} volume={rainVolume} />
 
-      {/* 词典按钮 */}
-      {titleDone && (
+      {/* 词典按钮 — 结尾演出时隐藏 */}
+      {titleDone && !isEnding && (
         <button
           className="chapter-night-dictionary-btn"
           type="button"
@@ -308,15 +409,15 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
         </button>
       )}
 
-      {/* 操作提示 */}
-      {titleDone && (
+      {/* 操作提示 — 结尾演出时隐藏 */}
+      {titleDone && !isEnding && (
         <div className="chapter-night-hint">
           WASD 移动 | E 交互 | Q/ESC 关闭 | Tab 词典
         </div>
       )}
 
-      {/* 返回主菜单按钮 */}
-      {titleDone && (
+      {/* 返回主菜单按钮 — 结尾演出时隐藏 */}
+      {titleDone && !isEnding && (
         <button
           className="chapter-night-return-btn"
           type="button"
@@ -326,8 +427,8 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
         </button>
       )}
 
-      {/* 玩家标记点 */}
-      {titleDone && (
+      {/* 玩家标记点 — 结尾演出时隐藏 */}
+      {titleDone && !isEnding && (
         <div
           className="chapter-night-player-marker"
           aria-hidden="true"
@@ -359,6 +460,98 @@ function ChapterNight({ onReturnToMenu, isDictionaryOpen, openDictionary, unlock
           <div className="chapter-night-dialog-controls">
             E / 点击继续 | Q / ESC 返回
           </div>
+        </div>
+      )}
+
+      {/* ────── 结尾演出 ────── */}
+
+      {/* 第二次报幕：江永村：[midnight1][midnight2] — 不可跳过，5s 自动转场 */}
+      {endingPhase === 'midnightTitle' && (
+        <div className="chapter-night-ending chapter-night-ending--locked">
+          <div className="chapter-night-ending-bg" />
+          <div className="chapter-night-ending-content">
+            <h1 className="chapter-night-ending-title">
+              江永村：
+              <img
+                src="/assets/FirstLevel/midnight1.png"
+                alt=""
+                className="chapter-night-ending-char"
+                draggable={false}
+              />
+              <img
+                src="/assets/FirstLevel/midnight2.png"
+                alt=""
+                className="chapter-night-ending-char"
+                draggable={false}
+              />
+            </h1>
+          </div>
+        </div>
+      )}
+
+      {/* 第三次报幕第一段：千言写尽犹余半，留与XX作XX — 3s 自动过渡 */}
+      {endingPhase === 'poemHint' && (
+        <div className="chapter-night-ending chapter-night-ending--locked">
+          <div className="chapter-night-ending-bg" />
+          <div className="chapter-night-ending-content">
+            <h1 className="chapter-night-ending-title chapter-night-ending-title--poem">
+              千言写尽犹余半，留与XX作XX
+            </h1>
+          </div>
+        </div>
+      )}
+
+      {/* 第三次报幕第二段：揭示完整诗句 — 3s 后自动黑屏 */}
+      {endingPhase === 'poemReveal' && (
+        <div className="chapter-night-ending chapter-night-ending--locked">
+          <div className="chapter-night-ending-bg" />
+          <div className="chapter-night-ending-content">
+            <h1 className="chapter-night-ending-title chapter-night-ending-title--poem">
+              千言写尽犹余半，留与深宵作雨声
+            </h1>
+          </div>
+        </div>
+      )}
+
+      {/* 黑屏 */}
+      {endingPhase === 'blackout' && (
+        <div className="chapter-night-blackout" />
+      )}
+
+      {/* 致谢名单滚动 */}
+      {endingPhase === 'credits' && (
+        <div className="chapter-night-credits" onClick={skipCredits}>
+          <div className="chapter-night-credits-scroll">
+            <div className="chapter-night-credits-content">
+              <h2 className="chapter-night-credits-title">女书：世界上唯一属于女性的文字</h2>
+              <p className="chapter-night-credits-desc">女书是迄今为止世界上发现的唯一一种由女性创造、只在女性中流传和使用、并记录女性生活的文字系统。</p>
+
+              <h3>一、什么是女书？</h3>
+              <p>女书记录的是湖南江永县一带的"永明土话"，字形呈斜体修长，右高左低，纤细娟秀，与方块汉字截然不同。用不过四百余个字符，便可写出千余字的七言韵文。当地人称它"长脚蚊字"或"蚂蚁字"，学者则称之为——世界上唯一的性别文字。</p>
+              <p>女书的载体也别具一格。它极少被雕刻或印刷，而是由妇女一针一线、一笔一画地书写在：精制布面手抄本（称"三朝书"，是婚嫁时的珍贵礼物）、扇面（称"歌扇"）、布帕（称"帕书"）和纸片（称"纸文"）之上。有的妇女还将女书字符绣在帕子上，称之为"绣字"。</p>
+
+              <h3>二、她们如何传承？</h3>
+              <p>女书的传习方式，本身就是一部女性相扶相助的生活史：家传式——母亲教女儿，祖母教孙女，在灶台边、油灯下代代相传。私塾式——花钱拜水平较高的专职妇女为师，系统学习。歌堂式——妇女们聚在一起做女红，一边读纸、读扇，一边互教互学。这是最常见也最富生命力的传承方式。自学式——借来或买来女书文本，照着抄写摹习。因为当地妇女几乎人人会唱女书歌，自学起来并不困难。</p>
+
+              <h3>三、她们写了什么？</h3>
+              <p>女书作品的内容，主要有：贺三朝书与婚嫁歌——新娘出嫁第三日，闺蜜姊妹以女书相赠，既是祝福也是不舍。结交老同书——"老同"即同龄结拜姊妹，她们用女书写下最深的情谊，有时胜过夫妻。自传诉苦歌——这是女书作品中最动人的部分。妇女们用女书写下自己一生的苦楚——被买卖的婚姻、婆家的苛待、丧夫失子的痛楚。这些文字从不示于男子，是她们仅有的倾诉角落。以及纪事叙事歌、祭祀祈神歌、往来书信、翻译改写传统汉文故事、耍歌民谣……</p>
+              <p>可以说，女书是一种自娱自乐的苦情文学。她们在歌声中哭，在哭声中唱，在字里行间找到了与自己和解的方式。</p>
+
+              <h3>四、它有多古老？</h3>
+              <p>关于女书的起源，至今仍是谜。最早的文献记载，仅出现在民国二十年（1931年）的《湖南各县调查笔记》中："每岁五月，各乡妇女焚香膜拜，持歌扇同声高唱……其歌扇所书蝇头细字，似蒙古文。全县男子能识此种字者，余之未见。"</p>
+              <p>而在当地妇女的口碑传说中，关于女书的起源有这样几种说法：九斤姑娘女红造字说——上江圩一位才华出众的九斤姑娘，为了让女子们能互相通信，创造了这种文字。荆田胡氏皇妃传书说——相传古时荆田村胡家姑娘被选入宫为妃，在宫中备受冷遇，便创造女书向家人诉苦。至今荆田村仍有"御书楼"遗址。神台买书说——相传女书是从庙里神台上"花钱买书"而来，最早的版本是用丝线绣在绸子上的。这些传说虽不可考，却共同指向一个事实：女书的诞生，是女性维护自身权益的迫切需求。</p>
+
+              <h3>五、她们去哪了？</h3>
+              <p>女书的主人去世后，人们会把她的女书作品作为殉葬品一同埋葬或焚烧——"人死书亡"。加上历次政治运动中女书被当作"妖书""妖字"屡遭批判、整筐烧毁，留存至今的古老女书文本极为稀少。现存最早的女书传本，仅可追溯到明末清初。</p>
+
+              <h3>六、今天</h3>
+              <p>20世纪80年代，学者重新"发现"了女书，这一濒临消失的文字瑰宝得以抢救和保护。2006年，女书被列入中国首批国家级非物质文化遗产名录。如今，最后一批自然传承的女书老人已然凋零。但女书的字符还在——在博物馆的展柜里，在学者的论文中，在越来越多年轻女性的笔下。</p>
+              <p>她们留下的不只是一套文字，而是一个从未被倾听的世界。</p>
+              <p>感谢你完成这段旅程。</p>
+              <p>如果你对女书有了更多好奇——那是它最大的幸运。</p>
+            </div>
+          </div>
+          <div className="chapter-night-credits-hint">点击任意位置继续</div>
         </div>
       )}
     </div>
