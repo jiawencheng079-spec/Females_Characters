@@ -898,7 +898,7 @@
 /* ========== 关卡流程重开按钮 ========== */
 .chapter1-reopen-btn {
   position: fixed;
-  top: 116px;
+  top: 152px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 80;
