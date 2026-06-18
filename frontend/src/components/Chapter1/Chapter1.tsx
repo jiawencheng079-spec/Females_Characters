@@ -243,18 +243,19 @@ function Chapter1({
   const vpRef = useRef({ w: window.innerWidth, h: window.innerHeight })
 
   const getNearestInteractionId = useCallback((playerX: number, playerY: number): Chapter1InteractionId | null => {
+    const tutorialDone = guideDictDone && guideDictDismissed
     const interactions: Array<{
       id: Chapter1InteractionId
       el: HTMLElement | null
       enabled: boolean
     }> = [
-      { id: 'winejar', el: winejarRef.current, enabled: true },
-      { id: 'snow', el: snowRef.current, enabled: true },
-      { id: 'swallow', el: swallowRef.current, enabled: true },
+      { id: 'winejar', el: winejarRef.current, enabled: tutorialDone },
+      { id: 'snow', el: snowRef.current, enabled: tutorialDone },
+      { id: 'swallow', el: swallowRef.current, enabled: tutorialDone },
       { id: 'letter', el: droppedLetterRef.current, enabled: letterDropped },
       { id: 'mailbox', el: mailboxRef.current, enabled: !letterDropped },
-      { id: 'boundary', el: boundaryRef.current, enabled: true },
-      { id: 'label', el: labelRef.current, enabled: true },
+      { id: 'boundary', el: boundaryRef.current, enabled: tutorialDone },
+      { id: 'label', el: labelRef.current, enabled: tutorialDone },
     ]
 
     let nearestId: Chapter1InteractionId | null = null
@@ -273,7 +274,7 @@ function Chapter1({
     })
 
     return nearestId
-  }, [letterDropped])
+  }, [letterDropped, guideDictDone, guideDictDismissed])
 
   // 预加载图片
   useEffect(() => {
