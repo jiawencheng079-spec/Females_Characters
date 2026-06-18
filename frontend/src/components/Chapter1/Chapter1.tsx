@@ -139,6 +139,7 @@ interface Chapter1Props {
   isDictionaryOpen: boolean
   openDictionary: () => void
   unlockEntry: (entryId: string) => void
+  placedSlots: Record<string, string>
   onLeave: (progress: ProgressStage) => void
   onProgressChange: (progress: ProgressStage) => void
   onComplete: () => void
@@ -149,6 +150,7 @@ function Chapter1({
   isDictionaryOpen,
   openDictionary,
   unlockEntry,
+  placedSlots,
   onLeave,
   onProgressChange,
   onComplete,
@@ -204,6 +206,10 @@ function Chapter1({
   const [quizDismissed, setQuizDismissed] = useState(false) // Q1/Q2 关闭后是否可重开
   const [quizQ1Done, setQuizQ1Done] = useState(false) // Q1 已正确完成，等待 label 触发 Q2
   const [labelStep, setLabelStep] = useState(0) // label 多段对话步骤 0-3
+  const [postQ1DialogueStep, setPostQ1DialogueStep] = useState(-1) // Q1正确后额外对话：-1=未激活, 0=阿禾, 1=旁白
+  const [guideDictDone, setGuideDictDone] = useState(false) // 新手引导字典匹配已完成
+  const [guideDictDismissed, setGuideDictDismissed] = useState(false) // 台词是否已关闭
+  const placedSlotCountAtStartRef = useRef(Object.keys(placedSlots).length) // 进入引导时已放置的槽位数
   // Q3 匹配游戏
   const [matchActive, setMatchActive] = useState(false)
   const [matchStep, setMatchStep] = useState(0) // 0=阿禾说话, 1=匹配界面
@@ -320,7 +326,7 @@ function Chapter1({
 
   // 动画帧 — WASD 平移（旁白/对话/弹窗期间暂停）
   useEffect(() => {
-    if (!imgReady || isDictionaryOpen || showBoundaryInfo || showLetterPopup || showSwallowInfo || showSnowInfo || showWinejarInfo || showBookPopup || isQuizBusy || !narrationDone || (dialogActive && !dialogFinished) || (narration2Active && !narration2Done) || tutorialPhase !== 'done') return
+    if (!imgReady || isDictionaryOpen || showBoundaryInfo || showLetterPopup || showSwallowInfo || showSnowInfo || showWinejarInfo || showBookPopup || isQuizBusy || !narrationDone || (dialogActive && !dialogFinished) || (narration2Active && !narration2Done) || tutorialPhase !== 'done' || postQ1DialogueStep >= 0 || (guideDictDone && !guideDictDismissed)) return
 
     let lastTime = performance.now()
     const clamp = (v: number, min: number, max: number) =>
@@ -390,7 +396,7 @@ function Chapter1({
 
     animRef.current = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(animRef.current)
-  }, [imgReady, maxX, maxY, isDictionaryOpen, showBoundaryInfo, showLetterPopup, showSwallowInfo, showSnowInfo, showWinejarInfo, showLabelInfo, showBookPopup, isQuizBusy, narrationDone, dialogActive, dialogFinished, narration2Active, narration2Done, tutorialPhase, sceneW, sceneH, getNearestInteractionId])
+  }, [imgReady, maxX, maxY, isDictionaryOpen, showBoundaryInfo, showLetterPopup, showSwallowInfo, showSnowInfo, showWinejarInfo, showLabelInfo, showBookPopup, isQuizBusy, narrationDone, dialogActive, dialogFinished, narration2Active, narration2Done, tutorialPhase, postQ1DialogueStep, guideDictDone, guideDictDismissed, sceneW, sceneH, getNearestInteractionId])
 
   // 图片加载后把初始位置对齐 Phaser 场景的出生点
   useEffect(() => {
@@ -438,6 +444,23 @@ function Chapter1({
     onProgressChange(getSaveProgress())
   }, [getSaveProgress, onProgressChange])
 
+  // 新手引导：监测玩家在 post-Q1 后打开字典完成匹配并关闭
+  const prevDictOpenRef = useRef(false)
+  useEffect(() => {
+    if (guideDictDone) return
+    // 仅在 post-Q1 对话已结束、Q1已完成 的阶段才监听
+    if (!quizQ1Done || postQ1DialogueStep >= 0) {
+      prevDictOpenRef.current = isDictionaryOpen
+      return
+    }
+    const placedCount = Object.keys(placedSlots).length
+    // 字典从打开→关闭 且 有新的放置
+    if (prevDictOpenRef.current && !isDictionaryOpen && placedCount > placedSlotCountAtStartRef.current) {
+      setGuideDictDone(true)
+    }
+    prevDictOpenRef.current = isDictionaryOpen
+  }, [isDictionaryOpen, quizQ1Done, postQ1DialogueStep, placedSlots, guideDictDone])
+
   useEffect(() => {
     const handleHudKeyDown = (event: KeyboardEvent) => {
       if (isDictionaryOpen) return
@@ -461,6 +484,8 @@ function Chapter1({
         if (showWinejarInfo) { setShowWinejarInfo(false); return }
         if (showBookPopup) { handleBookPopupClose(); return }
         if (showLabelInfo) { setShowLabelInfo(false); setLabelStep(0); return }
+        if (postQ1DialogueStep >= 0) { setPostQ1DialogueStep(-1); setQuizQ1Done(true); return }
+        if (guideDictDone && !guideDictDismissed) { setGuideDictDismissed(true); return }
 
         return
       }
@@ -544,6 +569,16 @@ function Chapter1({
         if (showLabelInfo) {
           event.preventDefault()
           advanceLabelDialogue()
+          return
+        }
+        if (postQ1DialogueStep >= 0) {
+          event.preventDefault()
+          advancePostQ1Dialogue()
+          return
+        }
+        if (guideDictDone && !guideDictDismissed) {
+          event.preventDefault()
+          setGuideDictDismissed(true)
           return
         }
         if (isQuizBusy) return
@@ -694,7 +729,19 @@ function Chapter1({
     matchEverStarted,
     showLabelInfo,
     labelStep,
+    postQ1DialogueStep,
+    guideDictDone,
+    guideDictDismissed,
   ])
+
+  // 若已有字典放置记录（存档恢复），跳过引导对话
+  useEffect(() => {
+    if (Object.keys(placedSlots).length > 0) {
+      setGuideDictDone(true)
+      setGuideDictDismissed(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // 恢复存档进度：快进到对应阶段
   useEffect(() => {
@@ -877,9 +924,9 @@ function Chapter1({
     setQuizFeedback(null)
     if (isCorrect) {
       if (quizQuestion === 1) {
-        // Q1 正确 → 不再自动触发 Q2，等玩家探索 label 时触发
-        setQuizQ1Done(true)
+        // Q1 正确 → 阿禾对话 + 字典教程旁白 → 最后 setQuizQ1Done
         setQuizActive(false)
+        setPostQ1DialogueStep(0)
       } else {
         // Q2 正确 → 阿禾发言 → 匹配题界面 → 阿禾提示
         setQuizActive(false)
@@ -897,6 +944,16 @@ function Chapter1({
       // Q2 错误：重新展示四张图，看完后再选
       setQuizImageOpen(true)
       setQuizImageStep(1)
+    }
+  }
+
+  // Q1 正确后的额外对话推进：阿禾 → 旁白 → 完成
+  const advancePostQ1Dialogue = () => {
+    if (postQ1DialogueStep === 0) {
+      setPostQ1DialogueStep(1) // 进入旁白
+    } else {
+      setPostQ1DialogueStep(-1)
+      setQuizQ1Done(true)
     }
   }
 
@@ -1283,7 +1340,7 @@ function Chapter1({
 
 
 
-      {narration2Done && tutorialPhase === 'done' && (
+      {narration2Done && tutorialPhase === 'done' && postQ1DialogueStep < 0 && !(guideDictDone && !guideDictDismissed) && (
         <div className="chapter1-hint">
           {nearestInteractionId
             ? `WASD 移动 | E 交互 · ${CHAPTER1_INTERACTION_LABELS[nearestInteractionId]} | Tab 词典 | Q / ESC 返回`
@@ -1292,7 +1349,7 @@ function Chapter1({
       )}
 
       {/* HUD — 教程结束后进入自由探索才显示 */}
-      {narration2Done && tutorialPhase === 'done' && (
+      {narration2Done && tutorialPhase === 'done' && postQ1DialogueStep < 0 && !(guideDictDone && !guideDictDismissed) && (
         <>
           <button
             className="chapter1-dictionary-btn"
@@ -1484,24 +1541,12 @@ function Chapter1({
           <div className="chapter1-object-preview-stage">
             <div className="chapter1-object-preview-letter">
               <p className="letter-text">
-                亲爱的姐妹：<br />
-                <span className="letter-text-indent">
-                  <span className="letter-image-slot">
-                    <img
-                      src="/assets/FirstLevel/letterclue1.png"
-                      alt="线索图1"
-                      className="letter-clue-img"
-                    />
-                  </span>
-                  <span className="letter-image-slot">
-                    <img
-                      src="/assets/FirstLevel/letterclue2.png"
-                      alt="线索图2"
-                      className="letter-clue-img"
-                    />
-                  </span>
-                  ！XXX...
-                </span>
+                <img
+                  src="/assets/FirstLevel/Q1.png"
+                  alt="Q1"
+                  className="letter-clue-img"
+                />
+                亲启，展信安
               </p>
             </div>
           </div>
@@ -1591,6 +1636,32 @@ function Chapter1({
           ? '嗯，也许您是对的'
           : getQuizWrongFeedback(quizQuestion, quizLastChoice),
         onClick: closeQuizFeedback,
+      })}
+
+      {/* Q1 正确后 — 阿禾额外对话："你"字放到字典 */}
+      {postQ1DialogueStep === 0 && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '现在让我们将这个字补上吧，将这个字放到您认为合适的位置即可，我想这个\'你\'字应该放在"已为"下面？',
+        onClick: advancePostQ1Dialogue,
+      })}
+
+      {/* Q1 正确后 — 旁白：字典教程 */}
+      {postQ1DialogueStep === 1 && (
+        <div className="narration-overlay" onClick={advancePostQ1Dialogue}>
+          <div className="narration-box">
+            <p className="narration-line">
+              按 Tab 键可以打开词典，将解锁的字拖到字典中的方框中，如果位置正确则完成该字符的破解。
+            </p>
+            <span className="narration-click-hint">E / 点击继续</span>
+          </div>
+        </div>
+      )}
+
+      {/* 新手引导：字典匹配完成后，阿禾总结 */}
+      {guideDictDone && !guideDictDismissed && renderCharacterDialogue({
+        speaker: '阿禾',
+        text: '接下来我和您继续寻找其他线索',
+        onClick: () => setGuideDictDismissed(true),
       })}
 
       {/* Quiz 旁白 — 错误后提示重新思考 */}

@@ -237,6 +237,7 @@ function App() {
           isDictionaryOpen={dictionary.isDictionaryOpen}
           openDictionary={dictionary.openDictionary}
           unlockEntry={dictionary.unlockEntry}
+          placedSlots={dictionary.placedSlots as Record<string, string>}
           onLeave={handleLeaveGame}
           onProgressChange={setVillageProgress}
           onComplete={() => deleteSave()}
